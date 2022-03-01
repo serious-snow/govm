@@ -2,6 +2,7 @@ package models
 
 import (
 	"regexp"
+	"runtime"
 	"sort"
 	"strconv"
 	"strings"
@@ -174,4 +175,5 @@ func (s SortV) Sort() {
 
 func (s SortV) Reverse() {
 	sort.Sort(sort.Reverse(s))
+	runtime.LockOSThread()
 }

@@ -5,12 +5,12 @@ import (
 	"encoding/hex"
 	"fmt"
 	"github.com/qianlnk/pgbar"
-	"govm/utils/filepath"
+	"govm/utils/path"
 	"io"
 	"io/ioutil"
 	"net/http"
 	"os"
-	"path"
+	"path/filepath"
 	"time"
 )
 
@@ -35,12 +35,12 @@ func Get(url string) ([]byte, error) {
 }
 
 func Download(url, dir, fileName, sha256v string) error {
-	if err := filepath.MakeDir(dir); err != nil {
+	if err := path.MakeDir(dir); err != nil {
 		return err
 	}
 
-	newFileName := path.Join(dir, fileName)
-	if filepath.FileIsExisted(newFileName) {
+	newFileName := filepath.Join(dir, fileName)
+	if path.FileIsExisted(newFileName) {
 
 		if sha256v == "" {
 			fmt.Println("检测到本地缓存文件存在，且忽略校验")
@@ -57,22 +57,24 @@ func Download(url, dir, fileName, sha256v string) error {
 		os.Remove(newFileName)
 		fmt.Println("sha256校验不通过，准备重新下载文件")
 	}
+
 	tempFileName := newFileName + ".temp"
 
 	file, err := os.Create(tempFileName)
 	if err != nil {
 		return err
 	}
-	defer file.Close()
 
 	resp, err := http.Get(url)
 	if resp != nil {
 		defer resp.Body.Close()
 	}
 	if err != nil {
+		file.Close()
 		return err
 	}
 	if resp.StatusCode != http.StatusOK {
+		file.Close()
 		return fmt.Errorf("下载失败，错误的状态码: %d", resp.StatusCode)
 	}
 	downloader := NewDownloader(resp)
@@ -82,8 +84,11 @@ func Download(url, dir, fileName, sha256v string) error {
 	_, err = io.Copy(mWriter, downloader)
 
 	if err != nil {
+		file.Close()
 		return err
 	}
+
+	file.Close()
 
 	dSha256 := hex.EncodeToString(sha.Sum(nil))
 	if sha256v != "" && dSha256 != sha256v {

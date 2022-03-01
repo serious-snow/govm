@@ -3,10 +3,9 @@ package cmd
 import (
 	"fmt"
 	"github.com/urfave/cli/v2"
-	"govm/utils/filepath"
+	"govm/utils/path"
 	"os"
-	"path"
-	"runtime"
+	"path/filepath"
 )
 
 func uninstallCommand() *cli.Command {
@@ -35,12 +34,13 @@ func uninstallVersion(version string) {
 		return
 	}
 	defer func() {
-		tarFile := path.Join(conf.CachePath, fmt.Sprintf("go%s.%s-%s.tar.gz", version, runtime.GOOS, runtime.GOARCH))
-		if filepath.FileIsExisted(tarFile) {
-			os.Remove(tarFile)
+		fileName := getDownloadFilename(version)
+
+		if path.FileIsExisted(fileName) {
+			os.Remove(fileName)
 		}
 	}()
-	err := os.RemoveAll(path.Join(conf.InstallPath, version))
+	err := os.RemoveAll(filepath.Join(conf.InstallPath, version))
 	if err != nil {
 		printError(version + " 卸载失败：" + err.Error())
 		return

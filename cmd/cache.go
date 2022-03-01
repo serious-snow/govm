@@ -3,10 +3,10 @@ package cmd
 import (
 	"fmt"
 	"github.com/urfave/cli/v2"
-	"govm/utils/filepath"
+	"govm/utils/path"
 	"io/ioutil"
 	"os"
-	"path"
+	"path/filepath"
 )
 
 func cacheCommand() *cli.Command {
@@ -27,7 +27,7 @@ func cacheCommand() *cli.Command {
 				Name:  "clean",
 				Usage: "clean cache dir",
 				Action: func(context *cli.Context) error {
-					if !filepath.PathIsExisted(conf.CachePath) {
+					if !path.PathIsExisted(conf.CachePath) {
 						return nil
 					}
 					fileInfoList, err := ioutil.ReadDir(conf.CachePath)
@@ -44,7 +44,7 @@ func cacheCommand() *cli.Command {
 							continue
 						}
 
-						os.Remove(path.Join(conf.CachePath, info.Name()))
+						os.Remove(filepath.Join(conf.CachePath, info.Name()))
 					}
 					return nil
 				},
@@ -57,7 +57,7 @@ func cacheCommand() *cli.Command {
 					defer func() {
 						fmt.Println(formatSize(size))
 					}()
-					if !filepath.PathIsExisted(conf.CachePath) {
+					if !path.PathIsExisted(conf.CachePath) {
 						return nil
 					}
 					fileInfoList, err := ioutil.ReadDir(conf.CachePath)

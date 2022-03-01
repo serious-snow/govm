@@ -6,10 +6,10 @@ import (
 	"github.com/urfave/cli/v2"
 	"govm/config"
 	"govm/models"
-	"govm/utils/filepath"
+	"govm/utils/path"
 	"io/ioutil"
 	"os"
-	"path"
+	"path/filepath"
 	"runtime"
 	"sort"
 	"strings"
@@ -33,7 +33,7 @@ var (
 )
 
 func Run() error {
-	pName = path.Base(os.Args[0])
+	pName = filepath.Base(os.Args[0])
 	isWin = runtime.GOOS == "windows"
 
 	var err error
@@ -41,32 +41,32 @@ func Run() error {
 	if err != nil {
 		return err
 	}
-	processDir = path.Join(homeDir, ".govm")
+	processDir = filepath.Join(homeDir, ".govm")
 
-	err = filepath.MakeDir(processDir)
+	err = path.MakeDir(processDir)
 	if err != nil {
 		return err
 	}
 
 	{
-		configPath := path.Join(processDir, "conf.yaml")
+		configPath := filepath.Join(processDir, "conf.yaml")
 		conf, err = config.InitConfig(processDir, configPath)
 		if err != nil {
 			return err
 		}
 
-		err = filepath.MakeDir(conf.InstallPath)
+		err = path.MakeDir(conf.InstallPath)
 		if err != nil {
 			return err
 		}
 
-		err = filepath.MakeDir(conf.CachePath)
+		err = path.MakeDir(conf.CachePath)
 		if err != nil {
 			return err
 		}
 	}
 
-	linkPath = path.Join(processDir, "bin")
+	linkPath = filepath.Join(processDir, "bin")
 
 	{
 		//检查环境变量
@@ -125,7 +125,7 @@ func isInstall(info models.Version) bool {
 }
 
 func readLocalCacheVersion() {
-	cacheJsonPath := path.Join(conf.CachePath, "version.json")
+	cacheJsonPath := filepath.Join(conf.CachePath, "version.json")
 	buf, err := ioutil.ReadFile(cacheJsonPath)
 	if err != nil {
 		return
@@ -141,7 +141,7 @@ func saveLocalCacheVersion() {
 	if len(localCacheVersions) == 0 {
 		return
 	}
-	cacheJsonPath := path.Join(conf.CachePath, "version.json")
+	cacheJsonPath := filepath.Join(conf.CachePath, "version.json")
 	file, err := os.OpenFile(cacheJsonPath, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0777)
 	if err != nil {
 		printError(err.Error())
@@ -252,26 +252,26 @@ func initEnvLinkPath() {
 	var env string
 	shell := os.Getenv("SHELL")
 	if strings.Contains(shell, "bash") {
-		newEnv := path.Join(homeDir, ".bashrc")
-		if filepath.FileIsExisted(newEnv) {
+		newEnv := filepath.Join(homeDir, ".bashrc")
+		if path.FileIsExisted(newEnv) {
 			env = newEnv
 		} else {
-			newEnv = path.Join(homeDir, ".bash_profile")
-			if filepath.FileIsExisted(newEnv) {
+			newEnv = filepath.Join(homeDir, ".bash_profile")
+			if path.FileIsExisted(newEnv) {
 				env = newEnv
 			}
 		}
 	} else if strings.Contains(shell, "zsh") {
-		newEnv := path.Join(homeDir, ".zshrc")
-		if filepath.FileIsExisted(newEnv) {
+		newEnv := filepath.Join(homeDir, ".zshrc")
+		if path.FileIsExisted(newEnv) {
 			env = newEnv
 		}
 	}
 
 	if env == "" {
 		for _, s := range []string{".profile", ".bashrc", ".bash_profile", ".zshrc"} {
-			newEnv := path.Join(homeDir, s)
-			if filepath.FileIsExisted(newEnv) {
+			newEnv := filepath.Join(homeDir, s)
+			if path.FileIsExisted(newEnv) {
 				env = newEnv
 				break
 			}
@@ -307,4 +307,13 @@ func initEnvLinkPath() {
 	printInfo("\n设置环境变量成功，可能需要重新打开控制台或者注销重新登录才能生效\n")
 
 	return
+}
+
+func getDownloadFilename(version string) string {
+	suffix := "tar.gz"
+	if isWin {
+		suffix = "zip"
+	}
+
+	return fmt.Sprintf("go%s.%s-%s.%s", version, runtime.GOOS, runtime.GOARCH, suffix)
 }

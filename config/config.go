@@ -3,7 +3,7 @@ package config
 import (
 	"gopkg.in/yaml.v2"
 	"os"
-	"path"
+	"path/filepath"
 )
 
 type Config struct {
@@ -15,8 +15,8 @@ func InitConfig(processDir, configPath string) (conf Config, err error) {
 	allBytes, err := os.ReadFile(configPath)
 	if err != nil {
 		conf = Config{
-			CachePath:   path.Join(processDir, ".cache"),
-			InstallPath: path.Join(processDir, ".install"),
+			CachePath:   filepath.Join(processDir, ".cache"),
+			InstallPath: filepath.Join(processDir, ".install"),
 		}
 		allBytes, err = yaml.Marshal(conf)
 		os.WriteFile(configPath, allBytes, 0777)

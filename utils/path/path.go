@@ -1,4 +1,4 @@
-package filepath
+package path
 
 import (
 	"archive/tar"
@@ -6,7 +6,7 @@ import (
 	"compress/gzip"
 	"io"
 	"os"
-	"path"
+	"path/filepath"
 )
 
 func FileIsExisted(filename string) bool {
@@ -32,7 +32,7 @@ func MakeDir(dir string) error {
 }
 
 func Decompress(from, to string) error {
-	switch path.Ext(from) {
+	switch filepath.Ext(from) {
 	case ".zip":
 		return UnZip(from, to)
 	default:
@@ -66,14 +66,14 @@ func DecompressTar(from, to string) error {
 			return err
 		}
 		if h.FileInfo().IsDir() {
-			err = MakeDir(path.Join(to, h.Name))
+			err = MakeDir(filepath.Join(to, h.Name))
 			if err != nil {
 				return err
 			}
 			continue
 		}
 		// 打开文件
-		fw, err := createFile(path.Join(to, h.Name), os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0755)
+		fw, err := createFile(filepath.Join(to, h.Name), os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0755)
 		if err != nil {
 			return err
 		}
@@ -104,14 +104,14 @@ func UnZip(from, to string) error {
 	// 读取文件
 	for _, file := range zr.File {
 		if file.FileInfo().IsDir() {
-			err = MakeDir(path.Join(to, file.Name))
+			err = MakeDir(filepath.Join(to, file.Name))
 			if err != nil {
 				return err
 			}
 			continue
 		}
 
-		if err = copyFile(file, path.Join(to, file.Name)); err != nil {
+		if err = copyFile(file, filepath.Join(to, file.Name)); err != nil {
 			return err
 		}
 
@@ -139,7 +139,7 @@ func copyFile(from *zip.File, to string) error {
 }
 
 func createFile(name string, flag int, perm os.FileMode) (*os.File, error) {
-	dir, _ := path.Split(name)
+	dir, _ := filepath.Split(name)
 
 	err := MakeDir(dir)
 

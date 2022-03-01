@@ -2,9 +2,10 @@ package cmd
 
 import (
 	"github.com/urfave/cli/v2"
-	"govm/utils/filepath"
+	"govm/utils/path"
 	"os"
-	"path"
+	"path/filepath"
+	"strings"
 )
 
 func useCommand() *cli.Command {
@@ -18,13 +19,13 @@ func useCommand() *cli.Command {
 			if v == "" {
 				return cli.ShowSubcommandHelp(c)
 			}
-			userVersion(v)
+			useVersion(v)
 			return nil
 		},
 	}
 }
 
-func userVersion(version string) {
+func useVersion(version string) {
 
 	version = trimVersion(version)
 
@@ -34,16 +35,19 @@ func userVersion(version string) {
 		return
 	}
 
-	goBinPath := path.Join(conf.InstallPath, version, "go/bin")
-	if !filepath.PathIsExisted(goBinPath) {
+	goBinPath := filepath.Join(conf.InstallPath, version, "go", "bin")
+	if !path.PathIsExisted(goBinPath) {
 		printError("golang bin 文件夹不存在，请重新安装")
 		return
 	}
 
 	os.Remove(linkPath)
-
 	err := os.Symlink(goBinPath, linkPath)
 	if err != nil {
-		printError("创建软连接失败:" + err.Error())
+		if isWin && strings.Contains(err.Error(), "A required privilege is not held by the client.") {
+			printError("创建软连接失败：没有足够的权限，请使用管理员重试")
+			return
+		}
+		printError("创建软连接失败：" + err.Error())
 	}
 }

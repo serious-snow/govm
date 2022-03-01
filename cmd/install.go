@@ -3,11 +3,10 @@ package cmd
 import (
 	"fmt"
 	"github.com/urfave/cli/v2"
-	"govm/utils/filepath"
 	"govm/utils/httpc"
+	"govm/utils/path"
 	"os"
-	"path"
-	"runtime"
+	"path/filepath"
 )
 
 func installCommand() *cli.Command {
@@ -60,12 +59,7 @@ func installVersion(version string, force bool, ignore bool) {
 
 	oldShav := ""
 
-	suffix := "tar.gz"
-	if isWin {
-		suffix = "zip"
-	}
-
-	fileName := fmt.Sprintf("go%s.%s-%s.%s", version, runtime.GOOS, runtime.GOARCH, suffix)
+	fileName := getDownloadFilename(version)
 
 	if !ignore {
 
@@ -87,7 +81,7 @@ func installVersion(version string, force bool, ignore bool) {
 		printError("\n" + err.Error())
 		return
 	}
-	newFileName := path.Join(conf.CachePath, fileName)
+	newFileName := filepath.Join(conf.CachePath, fileName)
 	fr, err := os.Open(newFileName)
 	if err != nil {
 		printError("\n解压失败")
@@ -95,8 +89,8 @@ func installVersion(version string, force bool, ignore bool) {
 	}
 	defer fr.Close()
 	//然后解压到install文件夹
-	toPath := path.Join(conf.InstallPath, version)
-	err = filepath.Decompress(newFileName, toPath)
+	toPath := filepath.Join(conf.InstallPath, version)
+	err = path.Decompress(newFileName, toPath)
 	if err != nil {
 		printError(fmt.Sprint("\n解压失败", err))
 		os.RemoveAll(toPath)
