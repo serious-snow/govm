@@ -29,7 +29,8 @@ var (
 
 	pName    string
 	isWin    bool
-	linkPath string
+	linkPath string //软连接路径
+	envPath  string //环境变量路径
 )
 
 func Run() error {
@@ -66,11 +67,12 @@ func Run() error {
 		}
 	}
 
-	linkPath = filepath.Join(processDir, "bin")
+	linkPath = filepath.Join(processDir, "go")
+	envPath = filepath.Join(linkPath, "bin")
 
 	{
 		//检查环境变量
-		initEnvLinkPath()
+		initEnvPath()
 		//读取本地安装版本
 		readLocalInstallVersion()
 		//读取本地缓存列表
@@ -85,7 +87,7 @@ func Run() error {
 		Usage:       "manage go version",
 		UsageText:   "",
 		ArgsUsage:   "",
-		Version:     "0.0.2",
+		Version:     "0.0.3",
 		Description: "a go version manager.\n" + printEnv(),
 		Commands: []*cli.Command{
 			listCommand(),
@@ -211,7 +213,7 @@ func readCurrentUseVersion() {
 
 	to = strings.ReplaceAll(to, "/", "")
 	to = strings.ReplaceAll(to, "\\", "")
-	to = strings.TrimSuffix(to, "gobin")
+	to = strings.TrimSuffix(to, "go")
 	currentUse.Parse(to)
 }
 
@@ -241,8 +243,8 @@ func formatSize(size int64) string {
 	return fmt.Sprintf("%.2f%s", fSize, units[idx])
 }
 
-func initEnvLinkPath() {
-	if strings.Contains(os.Getenv("PATH"), linkPath) {
+func initEnvPath() {
+	if strings.Contains(os.Getenv("PATH"), envPath) {
 		return
 	}
 	if isWin {
@@ -293,14 +295,14 @@ func initEnvLinkPath() {
 		return
 	}
 
-	if strings.Contains(string(buf), linkPath) {
+	if strings.Contains(string(buf), envPath) {
 		return
 	}
 
 	//showSetEnv = os.Setenv("PATH", os.Getenv("PATH")+string(os.PathListSeparator)+linkPath) != nil
 	//fmt.Println(os.Getenv("PATH"))
 	file.WriteString("\nexport PATH=$PATH:")
-	file.WriteString(linkPath)
+	file.WriteString(envPath)
 	file.WriteString("\n")
 	file.Sync()
 

@@ -18,7 +18,7 @@ type ListBucketResult struct {
 		MetaGeneration string `xml:"MetaGeneration"`
 		LastModified   string `xml:"LastModified"`
 		ETag           string `xml:"ETag"`
-		Size           string `xml:"Size"`
+		Size           int64  `xml:"Size,string"`
 	} `xml:"Contents"`
 }
 

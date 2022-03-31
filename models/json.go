@@ -2,7 +2,6 @@ package models
 
 import (
 	"regexp"
-	"runtime"
 	"sort"
 	"strconv"
 	"strings"
@@ -126,7 +125,6 @@ func Compare(a, b Version) int {
 	}
 	if a.V1 != b.V1 {
 		return a.V1 - b.V1
-
 	}
 	if a.V2 != b.V2 {
 		return a.V2 - b.V2
@@ -175,5 +173,4 @@ func (s SortV) Sort() {
 
 func (s SortV) Reverse() {
 	sort.Sort(sort.Reverse(s))
-	runtime.LockOSThread()
 }

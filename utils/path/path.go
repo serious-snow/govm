@@ -77,7 +77,6 @@ func DecompressTar(from, to string) error {
 		if err != nil {
 			return err
 		}
-
 		//fw.Chmod(0755)
 		// 写文件
 		_, err = io.Copy(fw, tr)

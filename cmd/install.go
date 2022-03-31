@@ -12,7 +12,8 @@ import (
 func installCommand() *cli.Command {
 	return &cli.Command{
 		Name:      "install",
-		Usage:     "download and install a <version>.",
+		Aliases:   []string{"i"},
+		Usage:     "download and install a <version>",
 		UsageText: getCmdLine("install", "[--force]", "[--ignore-sha256]", "<version>"),
 		Flags: []cli.Flag{
 			&cli.BoolFlag{
@@ -82,12 +83,12 @@ func installVersion(version string, force bool, ignore bool) {
 		return
 	}
 	newFileName := filepath.Join(conf.CachePath, fileName)
-	fr, err := os.Open(newFileName)
-	if err != nil {
-		printError("\n解压失败")
-		return
-	}
-	defer fr.Close()
+	//fr, err := os.Open(newFileName)
+	//if err != nil {
+	//	printError("\n解压失败")
+	//	return
+	//}
+	//defer fr.Close()
 	//然后解压到install文件夹
 	toPath := filepath.Join(conf.InstallPath, version)
 	err = path.Decompress(newFileName, toPath)

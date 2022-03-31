@@ -8,7 +8,7 @@ import (
 func unuseCommand() *cli.Command {
 	return &cli.Command{
 		Name:      "unuse",
-		Aliases:   nil,
+		Aliases:   []string{"uu"},
 		Usage:     "deactivated current use version",
 		UsageText: getCmdLine("unuse"),
 		Action: func(c *cli.Context) error {

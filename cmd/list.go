@@ -14,8 +14,8 @@ import (
 func listCommand() *cli.Command {
 	return &cli.Command{
 		Name:      "list",
-		Aliases:   nil,
-		Usage:     "show list.",
+		Aliases:   []string{"l"},
+		Usage:     "show list",
 		UsageText: getCmdLine("list", "[--available]", "[--update]"),
 		Flags: []cli.Flag{
 			&cli.BoolFlag{
@@ -57,11 +57,11 @@ func listCommand() *cli.Command {
 func reloadAvailable() {
 	res, err := getAvailable()
 	if err != nil {
-		printError("更新列表失败：" + err.Error())
+		printError("列表更新失败：" + err.Error())
 		return
 	}
 
-	fmt.Println("更新列表完成,本次更新 新增数量为:", len(res)-len(localCacheVersions))
+	fmt.Println("列表更新完成,本次更新 新增数量为:", len(res)-len(localCacheVersions))
 
 	localCacheVersions = res
 	saveLocalCacheVersion()

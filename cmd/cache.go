@@ -12,7 +12,8 @@ import (
 func cacheCommand() *cli.Command {
 	return &cli.Command{
 		Name:      "cache",
-		Usage:     "cache manager.",
+		Aliases:   []string{"c"},
+		Usage:     "cache manager",
 		UsageText: getCmdLine("cache", "[dir]", "[clean]"),
 		Subcommands: []*cli.Command{
 			{

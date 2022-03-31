@@ -11,8 +11,8 @@ import (
 func uninstallCommand() *cli.Command {
 	return &cli.Command{
 		Name:      "uninstall",
-		Aliases:   nil,
-		Usage:     "uninstall a <version>.",
+		Aliases:   []string{"ui"},
+		Usage:     "uninstall a <version>",
 		UsageText: getCmdLine("uninstall", "<version>"),
 		Action: func(c *cli.Context) error {
 			v := c.Args().Get(0)
