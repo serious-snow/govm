@@ -87,7 +87,7 @@ func Run() error {
 		Usage:       "manage go version",
 		UsageText:   "",
 		ArgsUsage:   "",
-		Version:     "0.0.3",
+		Version:     "0.0.4",
 		Description: "a go version manager.\n" + printEnv(),
 		Commands: []*cli.Command{
 			listCommand(),
@@ -96,10 +96,14 @@ func Run() error {
 			cacheCommand(),
 			uninstallCommand(),
 			unuseCommand(),
+			execCommand(),
 		},
 		BashComplete:           cli.DefaultAppComplete,
 		EnableBashCompletion:   true,
 		UseShortOptionHandling: true,
+		Reader:                 os.Stdin,
+		Writer:                 os.Stdout,
+		ErrWriter:              os.Stderr,
 	}
 
 	sort.Sort(cli.FlagsByName(app.Flags))
@@ -110,8 +114,8 @@ func Run() error {
 
 func printEnv() string {
 
-	if !strings.Contains(os.Getenv("PATH"), linkPath) {
-		return fmt.Sprintf("\nplease set environment：\033[0;31m%s\033[0;m", linkPath)
+	if !strings.Contains(os.Getenv("PATH"), envPath) {
+		return fmt.Sprintf("\nplease set environment：\033[0;31m%s\033[0;m", envPath)
 	}
 
 	return "\nenvironment set success."
