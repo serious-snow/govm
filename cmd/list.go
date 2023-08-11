@@ -3,19 +3,23 @@ package cmd
 import (
 	"encoding/xml"
 	"fmt"
-	"github.com/urfave/cli/v2"
-	"govm/models"
-	"govm/utils/httpc"
 	"regexp"
 	"runtime"
 	"strings"
+
+	"github.com/fatih/color"
+	"github.com/urfave/cli/v3"
+
+	"github.com/serious-snow/govm/pkg/utils/httpc"
+	"github.com/serious-snow/govm/pkg/version"
+	"github.com/serious-snow/govm/types"
 )
 
 func listCommand() *cli.Command {
 	return &cli.Command{
 		Name:      "list",
 		Aliases:   []string{"l"},
-		Usage:     "show list",
+		Usage:     "Show version list",
 		UsageText: getCmdLine("list", "[--available]", "[--update]"),
 		Flags: []cli.Flag{
 			&cli.BoolFlag{
@@ -61,13 +65,13 @@ func reloadAvailable() {
 		return
 	}
 
-	fmt.Println("列表更新完成,本次更新 新增数量为:", len(res)-len(localCacheVersions))
+	Println("列表更新完成,本次更新 新增数量为:", len(res)-len(localCacheVersions))
 
 	localCacheVersions = res
 	saveLocalCacheVersion()
 }
 
-func getAvailable() ([]*models.Version, error) {
+func getAvailable() ([]*version.Version, error) {
 	//https://storage.googleapis.com/golang/?prefix=go&marker=
 	link := downloadLink + "?prefix=go&marker="
 	suffix := "tar\\.gz"
@@ -77,8 +81,8 @@ func getAvailable() ([]*models.Version, error) {
 	var (
 		buf     []byte
 		err     error
-		res     []*models.Version
-		result  models.ListBucketResult
+		res     []*version.Version
+		result  types.ListBucketResult
 		goOS    = runtime.GOOS
 		goArch  = runtime.GOARCH
 		reg     = regexp.MustCompile(fmt.Sprintf("^go(.*)\\.%s-%s\\.%s$", goOS, goArch, suffix))
@@ -96,7 +100,7 @@ func getAvailable() ([]*models.Version, error) {
 
 		for _, content := range result.Contents {
 			if reg.MatchString(content.Key) {
-				res = append(res, models.NewVInfo(reg.FindStringSubmatch(content.Key)[1]))
+				res = append(res, version.New(reg.FindStringSubmatch(content.Key)[1]))
 			}
 		}
 		if result.NextMarker == "" {
@@ -107,45 +111,42 @@ func getAvailable() ([]*models.Version, error) {
 
 		result.Reset()
 	}
-	models.SortV(res).Reverse()
+	version.SortV(res).Reverse()
 	return res, nil
 }
 
 func printAvailable() {
 	sb := strings.Builder{}
-	sb.WriteString("available list:\n\n")
-	for _, i2 := range localCacheVersions {
+	using, other := "->     ", "       "
+	for _, v := range localCacheVersions {
+		if isInstall(*v) {
+			if version.Equal(*v, currentUse) {
+				_, _ = color.New(color.FgGreen).Fprint(&sb, using, v.String())
+			} else {
+				_, _ = color.New(color.FgBlue).Fprint(&sb, other, v.String())
+			}
 
-		if isInstall(*i2) {
-			sb.WriteString("\033[1;32m")
-			sb.WriteString(i2.String())
-			sb.WriteString(" (installed)")
-			sb.WriteString("\033[0m")
 		} else {
-			sb.WriteString(i2.String())
+			sb.WriteString(other)
+			sb.WriteString(v.String())
 		}
 		sb.WriteString("\n")
 	}
-	fmt.Println(sb.String())
+	Print(sb.String())
 	sb.Reset()
 }
 
 func printInstalled() {
 	sb := strings.Builder{}
-	sb.WriteString("installed list:\n\n")
-	sb.WriteString("\033[1;32m")
-	for _, i2 := range localInstallVersion {
-		if i2.Compare(currentUse) == 0 {
-			sb.WriteString("\033[1;31m")
-			sb.WriteString(i2.String())
-			sb.WriteString(" (current use)")
-			sb.WriteString("\033[1;32m")
+	using, other := "->     ", "       "
+	for _, v := range localInstallVersion {
+		if version.Equal(*v, currentUse) {
+			_, _ = color.New(color.FgGreen).Fprint(&sb, using, v.String())
 		} else {
-			sb.WriteString(i2.String())
+			_, _ = color.New(color.FgBlue).Fprint(&sb, other, v.String())
 		}
 		sb.WriteString("\n")
 	}
-	sb.WriteString("\033[0m")
-	fmt.Println(sb.String())
+	Print(sb.String())
 	sb.Reset()
 }

@@ -1,15 +1,16 @@
 package cmd
 
 import (
-	"github.com/urfave/cli/v2"
 	"os"
+
+	"github.com/urfave/cli/v3"
 )
 
 func unuseCommand() *cli.Command {
 	return &cli.Command{
 		Name:      "unuse",
 		Aliases:   []string{"uu"},
-		Usage:     "deactivated current use version",
+		Usage:     "Deactivated current use version",
 		UsageText: getCmdLine("unuse"),
 		Action: func(c *cli.Context) error {
 			if !currentUse.Valid() {

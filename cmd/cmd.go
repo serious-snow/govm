@@ -1,18 +1,22 @@
 package cmd
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
-	"github.com/urfave/cli/v2"
-	"govm/config"
-	"govm/models"
-	"govm/utils/path"
 	"io/ioutil"
 	"os"
 	"path/filepath"
 	"runtime"
 	"sort"
 	"strings"
+
+	"github.com/fatih/color"
+	"github.com/urfave/cli/v3"
+
+	"github.com/serious-snow/govm/config"
+	"github.com/serious-snow/govm/pkg/utils/path"
+	"github.com/serious-snow/govm/pkg/version"
 )
 
 const (
@@ -20,12 +24,16 @@ const (
 )
 
 var (
+	app *cli.Command
+)
+
+var (
 	conf                config.Config
 	homeDir             string
 	processDir          string
-	localCacheVersions  []*models.Version
-	localInstallVersion []*models.Version
-	currentUse          models.Version
+	localCacheVersions  []*version.Version
+	localInstallVersion []*version.Version
+	currentUse          version.Version
 
 	pName    string
 	isWin    bool
@@ -33,10 +41,12 @@ var (
 	envPath  string //环境变量路径
 )
 
-func Run() error {
+func init() {
 	pName = filepath.Base(os.Args[0])
 	isWin = runtime.GOOS == "windows"
+}
 
+func Run() error {
 	var err error
 	homeDir, err = os.UserHomeDir()
 	if err != nil {
@@ -81,14 +91,25 @@ func Run() error {
 		readCurrentUseVersion()
 	}
 
-	app := cli.App{
+	app = &cli.Command{
 		Name:        pName,
-		HelpName:    "",
-		Usage:       "manage go version",
+		Usage:       "Manage go version",
 		UsageText:   "",
 		ArgsUsage:   "",
 		Version:     "0.0.4",
 		Description: "a go version manager.\n" + printEnv(),
+		Flags: []cli.Flag{
+			&cli.BoolFlag{
+				Name:       "no-colors",
+				Usage:      "disable colors",
+				Persistent: true,
+			},
+		},
+		Before: func(c *cli.Context) error {
+			color.NoColor = c.Bool("no-colors")
+			return nil
+		},
+
 		Commands: []*cli.Command{
 			listCommand(),
 			installCommand(),
@@ -98,30 +119,31 @@ func Run() error {
 			unuseCommand(),
 			execCommand(),
 		},
-		BashComplete:           cli.DefaultAppComplete,
-		EnableBashCompletion:   true,
 		UseShortOptionHandling: true,
+		Suggest:                true,
 		Reader:                 os.Stdin,
 		Writer:                 os.Stdout,
 		ErrWriter:              os.Stderr,
 	}
 
 	sort.Sort(cli.FlagsByName(app.Flags))
-	sort.Sort(cli.CommandsByName(app.Commands))
+	sort.Slice(app.Commands, func(i, j int) bool {
+		return app.Commands[i].Name < app.Commands[j].Name
+	})
 
-	return app.Run(os.Args)
+	return app.Run(context.Background(), os.Args)
 }
 
 func printEnv() string {
 
 	if !strings.Contains(os.Getenv("PATH"), envPath) {
-		return fmt.Sprintf("\nplease set environment：\033[0;31m%s\033[0;m", envPath)
+		return fmt.Sprintf("\nplease set environment：%s", color.RedString(envPath))
 	}
 
 	return "\nenvironment set success."
 }
 
-func isInstall(info models.Version) bool {
+func isInstall(info version.Version) bool {
 	for _, vInfo := range localInstallVersion {
 		if vInfo.Compare(info) == 0 {
 			return true
@@ -136,11 +158,10 @@ func readLocalCacheVersion() {
 	if err != nil {
 		return
 	}
-	localCacheVersions = make([]*models.Version, 0)
-	json.Unmarshal(buf, &localCacheVersions)
+	localCacheVersions = make([]*version.Version, 0)
+	_ = json.Unmarshal(buf, &localCacheVersions)
 
-	models.SortV(localCacheVersions).Reverse()
-	return
+	version.SortV(localCacheVersions).Reverse()
 }
 
 func saveLocalCacheVersion() {
@@ -154,7 +175,7 @@ func saveLocalCacheVersion() {
 		os.Exit(1)
 	}
 	defer file.Close()
-	json.NewEncoder(file).Encode(localCacheVersions)
+	_ = json.NewEncoder(file).Encode(localCacheVersions)
 }
 
 func readLocalInstallVersion() {
@@ -162,45 +183,44 @@ func readLocalInstallVersion() {
 	if err != nil {
 		return
 	}
-	localInstallVersion = make([]*models.Version, 0)
+	localInstallVersion = make([]*version.Version, 0)
 	for _, info := range fileInfoList {
 		if !info.IsDir() {
 			continue
 		}
 
-		vInfo := models.NewVInfo(info.Name())
+		vInfo := version.New(info.Name())
 		if vInfo.Valid() {
 			localInstallVersion = append(localInstallVersion, vInfo)
 		}
 	}
 
-	models.SortV(localInstallVersion).Reverse()
-	return
+	version.SortV(localInstallVersion).Reverse()
 }
 
 func printError(msg string) {
-	fmt.Println("\033[0;31m" + msg + "\033[0;m")
+	ErrorLn(color.RedString(msg))
 }
 
 func printInfo(msg string) {
-	fmt.Println("\033[1;32m" + msg + "\033[0;m")
+	Println(color.GreenString(msg))
 }
 
-func isInLocalCache(version string) bool {
+func isInLocalCache(ver string) bool {
 
+	v := version.New(ver)
 	for _, cacheVersion := range localCacheVersions {
-		if version == cacheVersion.String() {
+		if version.Equal(*v, *cacheVersion) {
 			return true
 		}
 	}
-
 	return false
 }
 
-func isInInstall(version string) bool {
-
+func isInInstall(ver string) bool {
+	v := version.New(ver)
 	for _, cacheVersion := range localInstallVersion {
-		if version == cacheVersion.String() {
+		if version.Equal(*v, *cacheVersion) {
 			return true
 		}
 	}
@@ -218,12 +238,13 @@ func readCurrentUseVersion() {
 	to = strings.ReplaceAll(to, "/", "")
 	to = strings.ReplaceAll(to, "\\", "")
 	to = strings.TrimSuffix(to, "go")
-	currentUse.Parse(to)
+	currentUse = *version.New(to)
 }
 
 func trimVersion(version string) string {
 	version = strings.TrimSpace(version)
 	version = strings.TrimPrefix(version, "go")
+	version = strings.TrimPrefix(version, "v")
 	return version
 }
 
@@ -233,7 +254,7 @@ func getCmdLine(cmd ...string) string {
 }
 
 func printCmdLine(cmd ...string) {
-	fmt.Println(getCmdLine(cmd...))
+	Println(getCmdLine(cmd...))
 }
 
 func formatSize(size int64) string {
@@ -304,15 +325,13 @@ func initEnvPath() {
 	}
 
 	//showSetEnv = os.Setenv("PATH", os.Getenv("PATH")+string(os.PathListSeparator)+linkPath) != nil
-	//fmt.Println(os.Getenv("PATH"))
-	file.WriteString("\nexport PATH=$PATH:")
-	file.WriteString(envPath)
-	file.WriteString("\n")
-	file.Sync()
+	//Println(os.Getenv("PATH"))
+	_, _ = file.WriteString("\nexport PATH=$PATH:")
+	_, _ = file.WriteString(envPath)
+	_, _ = file.WriteString("\n")
+	_ = file.Sync()
 
 	printInfo("\n设置环境变量成功，可能需要重新打开控制台或者注销重新登录才能生效\n")
-
-	return
 }
 
 func getDownloadFilename(version string) string {

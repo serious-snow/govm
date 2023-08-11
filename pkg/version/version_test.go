@@ -1,4 +1,4 @@
-package models
+package version
 
 import (
 	"encoding/json"
@@ -8,10 +8,10 @@ import (
 
 func TestVInfo_MarshalJSON(t *testing.T) {
 	var ss = []*Version{
-		&Version{
-			V1:    1,
-			V2:    1,
-			V3:    2,
+		{
+			Major: 1,
+			Minor: 1,
+			Patch: new(int),
 			Beta:  true,
 			VBeta: 1,
 			RC:    false,

@@ -1,18 +1,20 @@
 package cmd
 
 import (
-	"github.com/urfave/cli/v2"
-	"govm/utils/path"
 	"os"
 	"path/filepath"
 	"strings"
+
+	"github.com/urfave/cli/v3"
+
+	"github.com/serious-snow/govm/pkg/utils/path"
 )
 
 func useCommand() *cli.Command {
 	return &cli.Command{
 		Name:      "use",
 		Aliases:   []string{"u"},
-		Usage:     "active a <version>",
+		Usage:     "Active a <version>",
 		UsageText: getCmdLine("use", "<version>"),
 		Action: func(c *cli.Context) error {
 			v := c.Args().Get(0)
@@ -41,7 +43,7 @@ func useVersion(version string) {
 		return
 	}
 
-	os.Remove(linkPath)
+	_ = os.Remove(linkPath)
 	err := os.Symlink(goRoot, linkPath)
 	if err != nil {
 		if isWin && strings.Contains(err.Error(), "A required privilege is not held by the client.") {

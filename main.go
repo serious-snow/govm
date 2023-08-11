@@ -1,7 +1,7 @@
 package main
 
 import (
-	"govm/cmd"
+	"github.com/serious-snow/govm/cmd"
 	"log"
 )
 

@@ -1,32 +1,33 @@
 package cmd
 
 import (
-	"fmt"
-	"github.com/urfave/cli/v2"
-	"govm/utils/path"
 	"io/ioutil"
 	"os"
 	"path/filepath"
+
+	"github.com/urfave/cli/v3"
+
+	"github.com/serious-snow/govm/pkg/utils/path"
 )
 
 func cacheCommand() *cli.Command {
 	return &cli.Command{
 		Name:      "cache",
 		Aliases:   []string{"c"},
-		Usage:     "cache manager",
-		UsageText: getCmdLine("cache", "[dir]", "[clean]"),
-		Subcommands: []*cli.Command{
+		Usage:     "Cache manager",
+		UsageText: getCmdLine("cache", "[dir]", "[clear]"),
+		Commands: []*cli.Command{
 			{
 				Name:  "dir",
-				Usage: "print cache dir",
+				Usage: "Print cache dir",
 				Action: func(context *cli.Context) error {
-					fmt.Println(conf.CachePath)
+					Println(conf.CachePath)
 					return nil
 				},
 			},
 			{
-				Name:  "clean",
-				Usage: "clean cache dir",
+				Name:  "clear",
+				Usage: "Clear cache",
 				Action: func(context *cli.Context) error {
 					if !path.PathIsExisted(conf.CachePath) {
 						return nil
@@ -45,18 +46,18 @@ func cacheCommand() *cli.Command {
 							continue
 						}
 
-						os.Remove(filepath.Join(conf.CachePath, info.Name()))
+						_ = os.Remove(filepath.Join(conf.CachePath, info.Name()))
 					}
 					return nil
 				},
 			},
 			{
 				Name:  "size",
-				Usage: "show cache size",
+				Usage: "Show cache size",
 				Action: func(context *cli.Context) error {
 					size := int64(0)
 					defer func() {
-						fmt.Println(formatSize(size))
+						Println(formatSize(size))
 					}()
 					if !path.PathIsExisted(conf.CachePath) {
 						return nil

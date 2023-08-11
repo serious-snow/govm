@@ -1,18 +1,19 @@
 package cmd
 
 import (
-	"github.com/urfave/cli/v2"
 	"os"
 	"os/exec"
 	"path/filepath"
 	"runtime"
+
+	"github.com/urfave/cli/v3"
 )
 
 func execCommand() *cli.Command {
 	return &cli.Command{
 		Name:      "exec",
 		Aliases:   []string{"e"},
-		Usage:     "exec command with the PATH pointing to go version",
+		Usage:     "Exec command with the PATH pointing to go version",
 		UsageText: getCmdLine("exec", "<version>", "go build main.go"),
 		Action: func(c *cli.Context) error {
 			if c.NArg() < 2 {

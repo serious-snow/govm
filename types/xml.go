@@ -1,4 +1,4 @@
-package models
+package types
 
 import "encoding/xml"
 
@@ -18,7 +18,7 @@ type ListBucketResult struct {
 		MetaGeneration string `xml:"MetaGeneration"`
 		LastModified   string `xml:"LastModified"`
 		ETag           string `xml:"ETag"`
-		Size           int64  `xml:"Size,string"`
+		Size           int64  `xml:"Size"`
 	} `xml:"Contents"`
 }
 

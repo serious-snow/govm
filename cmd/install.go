@@ -2,18 +2,21 @@ package cmd
 
 import (
 	"fmt"
-	"github.com/urfave/cli/v2"
-	"govm/utils/httpc"
-	"govm/utils/path"
 	"os"
 	"path/filepath"
+
+	"github.com/urfave/cli/v3"
+
+	"github.com/serious-snow/govm/pkg/utils"
+	"github.com/serious-snow/govm/pkg/utils/httpc"
+	"github.com/serious-snow/govm/pkg/utils/path"
 )
 
 func installCommand() *cli.Command {
 	return &cli.Command{
 		Name:      "install",
 		Aliases:   []string{"i"},
-		Usage:     "download and install a <version>",
+		Usage:     "Download and install a <version>",
 		UsageText: getCmdLine("install", "[--force]", "[--ignore-sha256]", "<version>"),
 		Flags: []cli.Flag{
 			&cli.BoolFlag{
@@ -58,12 +61,11 @@ func installVersion(version string, force bool, ignore bool) {
 		return
 	}
 
-	oldShav := ""
+	oldSha := ""
 
 	fileName := getDownloadFilename(version)
 
 	if !ignore {
-
 		b, err := httpc.Get(downloadLink + fileName + ".sha256")
 		if err != nil {
 			printError("暂未找到该版本sha256资源，请尝试忽略hash校验，执行：")
@@ -74,27 +76,31 @@ func installVersion(version string, force bool, ignore bool) {
 			}
 			return
 		}
-		oldShav = string(b)
+		oldSha = string(b)
 	}
 
-	err := httpc.Download(downloadLink+fileName, conf.CachePath, fileName, oldShav)
-	if err != nil {
-		printError("\n" + err.Error())
-		return
-	}
 	newFileName := filepath.Join(conf.CachePath, fileName)
-	//fr, err := os.Open(newFileName)
-	//if err != nil {
-	//	printError("\n解压失败")
-	//	return
-	//}
-	//defer fr.Close()
-	//然后解压到install文件夹
+	download := true
+	if path.FileIsExisted(newFileName) {
+		if ignore || utils.CheckSha256(newFileName, oldSha) {
+			download = false
+		} else {
+			_ = os.Remove(newFileName)
+		}
+	}
+	if download {
+		err := httpc.Download(downloadLink+fileName, conf.CachePath, fileName, oldSha)
+		if err != nil {
+			printError("\n" + err.Error())
+			return
+		}
+	}
+	// 然后解压到install文件夹
 	toPath := filepath.Join(conf.InstallPath, version)
-	err = path.Decompress(newFileName, toPath)
+	err := path.Decompress(newFileName, toPath)
 	if err != nil {
 		printError(fmt.Sprint("\n解压失败", err))
-		os.RemoveAll(toPath)
+		_ = os.RemoveAll(toPath)
 		return
 	}
 	printInfo("\n安装成功，如需激活，执行：")

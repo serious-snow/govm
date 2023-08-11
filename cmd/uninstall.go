@@ -1,18 +1,19 @@
 package cmd
 
 import (
-	"fmt"
-	"github.com/urfave/cli/v2"
-	"govm/utils/path"
 	"os"
 	"path/filepath"
+
+	"github.com/urfave/cli/v3"
+
+	"github.com/serious-snow/govm/pkg/utils/path"
 )
 
 func uninstallCommand() *cli.Command {
 	return &cli.Command{
 		Name:      "uninstall",
 		Aliases:   []string{"ui"},
-		Usage:     "uninstall a <version>",
+		Usage:     "Uninstall a <version>",
 		UsageText: getCmdLine("uninstall", "<version>"),
 		Action: func(c *cli.Context) error {
 			v := c.Args().Get(0)
@@ -46,5 +47,5 @@ func uninstallVersion(version string) {
 		return
 	}
 
-	fmt.Println(version, "卸载成功")
+	Println(version, "卸载成功")
 }

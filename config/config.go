@@ -1,9 +1,10 @@
 package config
 
 import (
-	"gopkg.in/yaml.v2"
 	"os"
 	"path/filepath"
+
+	"gopkg.in/yaml.v3"
 )
 
 type Config struct {
@@ -18,8 +19,8 @@ func InitConfig(processDir, configPath string) (conf Config, err error) {
 			CachePath:   filepath.Join(processDir, ".cache"),
 			InstallPath: filepath.Join(processDir, ".install"),
 		}
-		allBytes, err = yaml.Marshal(conf)
-		os.WriteFile(configPath, allBytes, 0777)
+		allBytes, _ = yaml.Marshal(conf)
+		err = os.WriteFile(configPath, allBytes, 0777)
 		return
 	}
 	err = yaml.Unmarshal(allBytes, &conf)

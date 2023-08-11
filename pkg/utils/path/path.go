@@ -23,7 +23,7 @@ func PathIsExisted(name string) bool {
 	return false
 }
 
-//创建文件夹
+// MakeDir 创建文件夹
 func MakeDir(dir string) error {
 	if !PathIsExisted(dir) {
 		return os.MkdirAll(dir, 0777)
