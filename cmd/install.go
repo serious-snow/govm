@@ -89,7 +89,7 @@ func installVersion(version string, force bool, ignore bool) {
 		}
 	}
 	if download {
-		Println("开始下载：", version)
+		Printf("开始下载：%s\n", version)
 		err := httpc.Download(downloadLink+fileName, conf.CachePath, fileName, oldSha)
 		if err != nil {
 			printError(err.Error())
