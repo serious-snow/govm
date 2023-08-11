@@ -89,9 +89,10 @@ func installVersion(version string, force bool, ignore bool) {
 		}
 	}
 	if download {
+		Println("开始下载：", version)
 		err := httpc.Download(downloadLink+fileName, conf.CachePath, fileName, oldSha)
 		if err != nil {
-			printError("\n" + err.Error())
+			printError(err.Error())
 			return
 		}
 	}
@@ -99,10 +100,10 @@ func installVersion(version string, force bool, ignore bool) {
 	toPath := filepath.Join(conf.InstallPath, version)
 	err := path.Decompress(newFileName, toPath)
 	if err != nil {
-		printError(fmt.Sprint("\n解压失败", err))
+		printError(fmt.Sprint("解压失败", err))
 		_ = os.RemoveAll(toPath)
 		return
 	}
-	printInfo("\n安装成功，如需激活，执行：")
+	printInfo("安装成功，如需激活，执行：")
 	printCmdLine("use", version)
 }
