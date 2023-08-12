@@ -145,87 +145,83 @@ func Greater(a, b Version) bool {
 	return Compare(a, b) > 0
 }
 
-func compareSegment(v, o int) int {
-	if v < o {
-		return -1
-	}
-	if v > o {
-		return 1
-	}
-
-	return 0
-}
-
-func Compare(a, b Version) int {
-	if d := compareSegment(a.Major, b.Major); d != 0 {
-		return d
-	}
-	if d := compareSegment(a.Minor, b.Minor); d != 0 {
-		return d
-	}
-	if d := compareSegment(a.GetPatch(), b.GetPatch()); d != 0 {
-		return d
-	}
-	if a.RC {
-		if b.RC {
-			return compareSegment(a.VRC, b.VRC)
-		}
-		if b.Beta {
-			return 1
-		}
-		return -1
-	}
-	if a.Beta {
-		if b.RC {
-			return -1
-		}
-		if b.Beta {
-			return compareSegment(a.VBeta, b.VBeta)
-		}
-		return -1
-	}
-	return 0
-}
-
-func New(version string) (v *Version) {
+func New(version string) *Version {
 	version = strings.TrimPrefix(version, "v")
 
-	v = new(Version)
-	if rcReg.MatchString(version) {
+	v := &Version{}
+	if match := rcReg.FindStringSubmatch(version); match != nil {
 		v.RC = true
-		numStr := rcReg.FindStringSubmatch(version)[1]
-		v.VRC = str2int(numStr)
+		v.VRC = str2int(match[1])
 		version = rcReg.ReplaceAllString(version, "")
 	}
 
-	if betaReg.MatchString(version) {
+	if match := betaReg.FindStringSubmatch(version); match != nil {
 		v.Beta = true
-		numStr := betaReg.FindStringSubmatch(version)[1]
-		v.VBeta = str2int(numStr)
+		v.VBeta = str2int(match[1])
 		version = betaReg.ReplaceAllString(version, "")
 	}
 
-	vs := strings.Split(version, ".")
-	const maxL = 3
-	nums := make([]*int, maxL)
-	for i, s := range vs {
-		if i == maxL {
-			break
-		}
-		v := str2int(s)
-		nums[i] = &v
+	vs := strings.SplitN(version, ".", 3)
+	if len(vs) > 0 {
+		v.Major = str2int(vs[0])
 	}
-	if nums[0] != nil {
-		v.Major = *nums[0]
+	if len(vs) > 1 {
+		v.Minor = str2int(vs[1])
 	}
-	if nums[1] != nil {
-		v.Minor = *nums[1]
+	if len(vs) > 2 {
+		patch := str2int(vs[2])
+		v.Patch = &patch
 	}
-	if nums[2] != nil {
-		temp := *nums[2]
-		v.Patch = &temp
+	return v
+}
+
+func compareSegment(v, o int) int {
+	switch {
+	case v < o:
+		return -1
+	case v > o:
+		return 1
+	default:
+		return 0
 	}
-	return
+}
+
+func Compare(v1, v2 Version) int {
+	if cmp := compareSegment(v1.Major, v2.Major); cmp != 0 {
+		return cmp
+	}
+	if cmp := compareSegment(v1.Minor, v2.Minor); cmp != 0 {
+		return cmp
+	}
+	if cmp := compareSegment(boolToInt(v1.Beta), boolToInt(v2.Beta)); cmp != 0 {
+		return cmp
+	}
+	if cmp := compareSegment(v1.VBeta, v2.VBeta); cmp != 0 {
+		return cmp
+	}
+	if cmp := compareSegment(boolToInt(v1.RC), boolToInt(v2.RC)); cmp != 0 {
+		return cmp
+	}
+	if cmp := compareSegment(v1.VRC, v2.VRC); cmp != 0 {
+		return cmp
+	}
+	if v1.Patch != nil && v2.Patch != nil {
+		return compareSegment(*v1.Patch, *v2.Patch)
+	}
+	if v1.Patch != nil {
+		return 1
+	}
+	if v2.Patch != nil {
+		return -1
+	}
+	return 0
+}
+
+func boolToInt(b bool) int {
+	if b {
+		return 1
+	}
+	return 0
 }
 
 type SortV []*Version
