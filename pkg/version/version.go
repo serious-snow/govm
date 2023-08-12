@@ -193,35 +193,41 @@ func Compare(v1, v2 Version) int {
 	if cmp := compareSegment(v1.Minor, v2.Minor); cmp != 0 {
 		return cmp
 	}
-	if cmp := compareSegment(boolToInt(v1.Beta), boolToInt(v2.Beta)); cmp != 0 {
-		return cmp
-	}
-	if cmp := compareSegment(v1.VBeta, v2.VBeta); cmp != 0 {
-		return cmp
-	}
-	if cmp := compareSegment(boolToInt(v1.RC), boolToInt(v2.RC)); cmp != 0 {
-		return cmp
-	}
-	if cmp := compareSegment(v1.VRC, v2.VRC); cmp != 0 {
-		return cmp
-	}
-	if v1.Patch != nil && v2.Patch != nil {
-		return compareSegment(*v1.Patch, *v2.Patch)
-	}
-	if v1.Patch != nil {
-		return 1
-	}
-	if v2.Patch != nil {
-		return -1
-	}
-	return 0
-}
 
-func boolToInt(b bool) int {
-	if b {
-		return 1
+	if v1.Patch != nil || v2.Patch != nil {
+		if v1.Patch != nil && v2.Patch != nil {
+			return compareSegment(*v1.Patch, *v2.Patch)
+		} else if v1.Patch != nil {
+			return 1
+		} else {
+			return -1
+		}
 	}
-	return 0
+
+	// empty > rc > beta
+	switch {
+	case v2.RC:
+		if v1.RC {
+			return compareSegment(v1.VRC, v2.VRC)
+		}
+		if v1.Beta {
+			return -1
+		}
+		return 1
+	case v2.Beta:
+		if v1.RC {
+			return 1
+		}
+		if v1.Beta {
+			return compareSegment(v1.VBeta, v2.VBeta)
+		}
+		return -1
+	default:
+		if v1.RC || v1.Beta {
+			return -1
+		}
+		return 0
+	}
 }
 
 type SortV []*Version
