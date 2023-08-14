@@ -3,6 +3,7 @@ package cmd
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io/ioutil"
 	"os"
@@ -12,6 +13,7 @@ import (
 	"strings"
 
 	"github.com/fatih/color"
+	"github.com/manifoldco/promptui"
 	"github.com/urfave/cli/v3"
 
 	"github.com/serious-snow/govm/config"
@@ -81,6 +83,48 @@ func Run() error {
 	envPath = filepath.Join(linkPath, "bin")
 
 	{
+		app = &cli.Command{
+			Name:        pName,
+			Usage:       "Manage go version",
+			UsageText:   "",
+			ArgsUsage:   "",
+			Version:     "0.0.4",
+			Description: "a go version manager.\n" + printEnv(),
+			Flags: []cli.Flag{
+				&cli.BoolFlag{
+					Name:       "no-colors",
+					Usage:      "disable colors",
+					Persistent: true,
+				},
+			},
+			Before: func(c *cli.Context) error {
+				color.NoColor = c.Bool("no-colors")
+				return nil
+			},
+
+			Commands: []*cli.Command{
+				listCommand(),
+				installCommand(),
+				useCommand(),
+				cacheCommand(),
+				uninstallCommand(),
+				unuseCommand(),
+				execCommand(),
+			},
+			UseShortOptionHandling: true,
+			Suggest:                true,
+			Reader:                 os.Stdin,
+			Writer:                 os.Stdout,
+			ErrWriter:              os.Stderr,
+		}
+
+		sort.Sort(cli.FlagsByName(app.Flags))
+		sort.Slice(app.Commands, func(i, j int) bool {
+			return app.Commands[i].Name < app.Commands[j].Name
+		})
+	}
+
+	{
 		//检查环境变量
 		initEnvPath()
 		//读取本地安装版本
@@ -90,46 +134,6 @@ func Run() error {
 		//读取当前使用的版本
 		readCurrentUseVersion()
 	}
-
-	app = &cli.Command{
-		Name:        pName,
-		Usage:       "Manage go version",
-		UsageText:   "",
-		ArgsUsage:   "",
-		Version:     "0.0.4",
-		Description: "a go version manager.\n" + printEnv(),
-		Flags: []cli.Flag{
-			&cli.BoolFlag{
-				Name:       "no-colors",
-				Usage:      "disable colors",
-				Persistent: true,
-			},
-		},
-		Before: func(c *cli.Context) error {
-			color.NoColor = c.Bool("no-colors")
-			return nil
-		},
-
-		Commands: []*cli.Command{
-			listCommand(),
-			installCommand(),
-			useCommand(),
-			cacheCommand(),
-			uninstallCommand(),
-			unuseCommand(),
-			execCommand(),
-		},
-		UseShortOptionHandling: true,
-		Suggest:                true,
-		Reader:                 os.Stdin,
-		Writer:                 os.Stdout,
-		ErrWriter:              os.Stderr,
-	}
-
-	sort.Sort(cli.FlagsByName(app.Flags))
-	sort.Slice(app.Commands, func(i, j int) bool {
-		return app.Commands[i].Name < app.Commands[j].Name
-	})
 
 	return app.Run(context.Background(), os.Args)
 }
@@ -269,69 +273,36 @@ func formatSize(size int64) string {
 }
 
 func initEnvPath() {
+
 	if strings.Contains(os.Getenv("PATH"), envPath) {
 		return
 	}
-	if isWin {
+
+	if conf.AutoSetEnv != nil {
 		return
 	}
 
-	var env string
-	shell := os.Getenv("SHELL")
-	if strings.Contains(shell, "bash") {
-		newEnv := filepath.Join(homeDir, ".bashrc")
-		if path.FileIsExisted(newEnv) {
-			env = newEnv
-		} else {
-			newEnv = filepath.Join(homeDir, ".bash_profile")
-			if path.FileIsExisted(newEnv) {
-				env = newEnv
-			}
-		}
-	} else if strings.Contains(shell, "zsh") {
-		newEnv := filepath.Join(homeDir, ".zshrc")
-		if path.FileIsExisted(newEnv) {
-			env = newEnv
-		}
+	prompt := promptui.Prompt{
+		Label:     "是否设置环境变量",
+		IsConfirm: true,
+		Default:   "y",
 	}
 
-	if env == "" {
-		for _, s := range []string{".profile", ".bashrc", ".bash_profile", ".zshrc"} {
-			newEnv := filepath.Join(homeDir, s)
-			if path.FileIsExisted(newEnv) {
-				env = newEnv
-				break
-			}
-		}
-	}
-
-	if env == "" {
-		return
-	}
-
-	file, err := os.OpenFile(env, os.O_CREATE|os.O_APPEND|os.O_RDWR, 0644)
+	v, err := prompt.Run()
 	if err != nil {
-		return
-	}
-	defer file.Close()
-
-	buf, err := ioutil.ReadAll(file)
-	if err != nil {
-		return
+		if errors.Is(err, promptui.ErrInterrupt) {
+			os.Exit(1)
+		}
 	}
 
-	if strings.Contains(string(buf), envPath) {
-		return
+	ok := strings.ToLower(v) == "y"
+
+	conf.AutoSetEnv = &ok
+	conf.Sync()
+
+	if ok {
+		SetEnv()
 	}
-
-	//showSetEnv = os.Setenv("PATH", os.Getenv("PATH")+string(os.PathListSeparator)+linkPath) != nil
-	//Println(os.Getenv("PATH"))
-	_, _ = file.WriteString("\nexport PATH=$PATH:")
-	_, _ = file.WriteString(envPath)
-	_, _ = file.WriteString("\n")
-	_ = file.Sync()
-
-	printInfo("\n设置环境变量成功，可能需要重新打开控制台或者注销重新登录才能生效\n")
 }
 
 func getDownloadFilename(version string) string {

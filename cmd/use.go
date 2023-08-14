@@ -44,7 +44,7 @@ func useVersion(version string) {
 	}
 
 	_ = os.Remove(linkPath)
-	err := os.Symlink(goRoot, linkPath)
+	err := Symlink(goRoot, linkPath)
 	if err != nil {
 		if isWin && strings.Contains(err.Error(), "A required privilege is not held by the client.") {
 			printError("创建软连接失败：没有足够的权限，请使用管理员重试")
