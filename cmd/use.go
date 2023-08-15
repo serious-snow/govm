@@ -3,7 +3,6 @@ package cmd
 import (
 	"os"
 	"path/filepath"
-	"strings"
 
 	"github.com/urfave/cli/v3"
 
@@ -46,10 +45,6 @@ func useVersion(version string) {
 	_ = os.Remove(linkPath)
 	err := Symlink(goRoot, linkPath)
 	if err != nil {
-		if isWin && strings.Contains(err.Error(), "A required privilege is not held by the client.") {
-			printError("创建软连接失败：没有足够的权限，请使用管理员重试")
-			return
-		}
 		printError("创建软连接失败：" + err.Error())
 	}
 }

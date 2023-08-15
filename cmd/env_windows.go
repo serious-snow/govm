@@ -4,14 +4,18 @@ package cmd
 
 import (
 	_ "embed"
+	"errors"
 	"fmt"
 	"os"
 	"os/exec"
 	"strings"
+	"time"
 
 	"github.com/go-ole/go-ole"
 	"github.com/go-ole/go-ole/oleutil"
 	"golang.org/x/sys/windows/registry"
+
+	"github.com/serious-snow/govm/pkg/utils/path"
 )
 
 func SetEnv() {
@@ -82,6 +86,13 @@ func UacSymlink(oldname, newname string) error {
 
 	if err := elevate(cmd); err != nil {
 		return err
+	}
+
+	// Must
+	time.Sleep(time.Millisecond * 200)
+
+	if !path.PathIsExisted(newname) {
+		return errors.New("没有足够的权限，请使用管理员重试")
 	}
 
 	return nil
