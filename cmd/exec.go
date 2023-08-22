@@ -14,7 +14,7 @@ func execCommand() *cli.Command {
 		Name:      "exec",
 		Aliases:   []string{"e"},
 		Usage:     "Exec command with the PATH pointing to go version",
-		UsageText: getCmdLine("exec", "<version>", "go build main.go"),
+		UsageText: getCmdLine("exec", "<version>", "go version"),
 		Action: func(c *cli.Context) error {
 			if c.NArg() < 2 {
 				return cli.ShowSubcommandHelp(c)
