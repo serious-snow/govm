@@ -88,7 +88,7 @@ func Run() error {
 			Usage:       "Manage go version",
 			UsageText:   "",
 			ArgsUsage:   "",
-			Version:     "0.0.1",
+			Version:     "v0.0.1",
 			Description: "a go version manager.\n" + printEnv(),
 			Flags: []cli.Flag{
 				&cli.BoolFlag{
