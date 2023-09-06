@@ -4,3 +4,4 @@ data
 ./govm
 govm.exe
 ./assets/uac.exe
+dist/
