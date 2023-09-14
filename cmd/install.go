@@ -79,10 +79,23 @@ func installVersion(version string, force bool, ignore bool) {
 		oldSha = string(b)
 	}
 
+	if err := silentInstall(version, oldSha); err != nil {
+		printError(err.Error())
+		return
+	}
+
+	printInfo("安装成功，如需激活，执行：")
+	printCmdLine("use", version)
+}
+
+func silentInstall(version string, oldSha string) error {
+
+	fileName := getDownloadFilename(version)
+
 	newFileName := filepath.Join(conf.CachePath, fileName)
 	download := true
 	if path.FileIsExisted(newFileName) {
-		if ignore || utils.CheckSha256(newFileName, oldSha) {
+		if utils.CheckSha256(newFileName, oldSha) {
 			download = false
 		} else {
 			_ = os.Remove(newFileName)
@@ -92,18 +105,16 @@ func installVersion(version string, force bool, ignore bool) {
 		Printf("开始下载：%s\n", version)
 		err := httpc.Download(downloadLink+fileName, conf.CachePath, fileName, oldSha)
 		if err != nil {
-			printError(err.Error())
-			return
+			return err
 		}
 	}
 	// 然后解压到install文件夹
 	toPath := filepath.Join(conf.InstallPath, version)
 	err := path.Decompress(newFileName, toPath)
 	if err != nil {
-		printError(fmt.Sprint("解压失败", err))
 		_ = os.RemoveAll(toPath)
-		return
+		return fmt.Errorf("解压失败:%w", err)
 	}
-	printInfo("安装成功，如需激活，执行：")
-	printCmdLine("use", version)
+
+	return nil
 }

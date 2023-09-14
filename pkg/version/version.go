@@ -1,6 +1,7 @@
 package version
 
 import (
+	"fmt"
 	"regexp"
 	"sort"
 	"strconv"
@@ -16,6 +17,10 @@ type Version struct {
 	VBeta int
 	RC    bool
 	VRC   int
+}
+
+func (v *Version) MinorVersion() string {
+	return fmt.Sprintf("%d.%d", v.Major, v.Minor)
 }
 
 func (v Version) MarshalText() (text []byte, err error) {

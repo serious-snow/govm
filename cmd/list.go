@@ -20,38 +20,34 @@ func listCommand() *cli.Command {
 		Name:      "list",
 		Aliases:   []string{"l"},
 		Usage:     "Show version list",
-		UsageText: getCmdLine("list", "[--available]", "[--update]"),
+		UsageText: getCmdLine("list", "[--installed]"),
 		Flags: []cli.Flag{
 			&cli.BoolFlag{
-				Name:    "available",
-				Aliases: []string{"a"},
-				Usage:   "show available version list",
+				Name:    "installed",
+				Aliases: []string{"i"},
+				Usage:   "show installed version list",
 			},
 			&cli.BoolFlag{
-				Name:    "update",
+				Name:    "upgradeable",
 				Aliases: []string{"u"},
-				Usage:   "update available version list",
+				Usage:   "show upgradeable version list",
 			},
 		},
 
 		Action: func(c *cli.Context) error {
-			if c.Bool("update") {
+
+			if len(localCacheVersions) == 0 {
 				reloadAvailable()
-				if c.Bool("available") {
-					printAvailable()
-				}
-				return nil
 			}
-			if c.Bool("available") {
-				if len(localCacheVersions) == 0 {
-					reloadAvailable()
-				}
-				//打印本地列表
+
+			switch {
+			case c.Bool("installed"):
+				printInstalled()
+			case c.Bool("upgradeable"):
+				printUpgradeable()
+			default:
 				printAvailable()
-				return nil
 			}
-			//打印已安装的 根据目录检测
-			printInstalled()
 			return nil
 
 		},
@@ -65,7 +61,9 @@ func reloadAvailable() {
 		return
 	}
 
-	Println("列表更新完成,本次更新 新增数量为:", len(res)-len(localCacheVersions))
+	if len(localInstallVersions) != 0 {
+		Println("列表更新完成,本次更新 新增数量为:", len(res)-len(localCacheVersions))
+	}
 
 	localCacheVersions = res
 	saveLocalCacheVersion()
@@ -116,14 +114,26 @@ func getAvailable() ([]*version.Version, error) {
 }
 
 func printAvailable() {
+	printVersions(localCacheVersions)
+}
+
+func printInstalled() {
+	printVersions(localInstallVersions)
+}
+
+func printVersions(vs []*version.Version) {
 	sb := strings.Builder{}
-	using, other := "->     ", "       "
-	for _, v := range localCacheVersions {
+	using, other, holding := "->     ", "       ", " (hold)"
+	for _, v := range vs {
 		if isInstall(*v) {
+			holdStr := ""
+			if isHold(v.String()) {
+				holdStr = holding
+			}
 			if version.Equal(*v, currentUse) {
-				_, _ = color.New(color.FgGreen).Fprint(&sb, using, v.String())
+				_, _ = color.New(color.FgGreen).Fprint(&sb, using, v.String(), holdStr)
 			} else {
-				_, _ = color.New(color.FgBlue).Fprint(&sb, other, v.String())
+				_, _ = color.New(color.FgBlue).Fprint(&sb, other, v.String(), holdStr)
 			}
 
 		} else {
@@ -136,17 +146,24 @@ func printAvailable() {
 	sb.Reset()
 }
 
-func printInstalled() {
-	sb := strings.Builder{}
-	using, other := "->     ", "       "
-	for _, v := range localInstallVersion {
-		if version.Equal(*v, currentUse) {
-			_, _ = color.New(color.FgGreen).Fprint(&sb, using, v.String())
-		} else {
-			_, _ = color.New(color.FgBlue).Fprint(&sb, other, v.String())
-		}
-		sb.WriteString("\n")
+func printUpgradeable() {
+	m := getUpgradeableList()
+	if len(m) == 0 {
+		println("所有版本均是最新版本")
+		return
 	}
+
+	sb := strings.Builder{}
+	count := 0
+	for s, versions := range m {
+		for _, v := range versions {
+			count++
+			sb.WriteString(v.String())
+			sb.WriteString(" -> ")
+			sb.WriteString(s)
+			sb.WriteString("\n")
+		}
+	}
+	Printf("有%d个版本可以升级：\n", count)
 	Print(sb.String())
-	sb.Reset()
 }

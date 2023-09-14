@@ -30,12 +30,14 @@ var (
 )
 
 var (
-	conf                config.Config
-	homeDir             string
-	processDir          string
-	localCacheVersions  []*version.Version
-	localInstallVersion []*version.Version
-	currentUse          version.Version
+	conf                 config.Config
+	homeDir              string
+	processDir           string
+	localCacheVersions   []*version.Version
+	localInstallVersions []*version.Version
+	holdVersions         []string
+
+	currentUse version.Version
 
 	pName    string
 	isWin    bool
@@ -88,7 +90,7 @@ func Run() error {
 			Usage:       "Manage go version",
 			UsageText:   "",
 			ArgsUsage:   "",
-			Version:     "v0.0.1",
+			Version:     "v0.0.2",
 			Description: "a go version manager.\n" + printEnv(),
 			Flags: []cli.Flag{
 				&cli.BoolFlag{
@@ -110,6 +112,10 @@ func Run() error {
 				uninstallCommand(),
 				unuseCommand(),
 				execCommand(),
+				updateCommand(),
+				upgradeCommand(),
+				holdCommand(),
+				unholdCommand(),
 			},
 			UseShortOptionHandling: true,
 			Suggest:                true,
@@ -133,6 +139,8 @@ func Run() error {
 		readLocalCacheVersion()
 		//读取当前使用的版本
 		readCurrentUseVersion()
+		// 读取本地hold的版本列表
+		readLocalHoldVersion()
 	}
 
 	return app.Run(context.Background(), os.Args)
@@ -148,7 +156,7 @@ func printEnv() string {
 }
 
 func isInstall(info version.Version) bool {
-	for _, vInfo := range localInstallVersion {
+	for _, vInfo := range localInstallVersions {
 		if vInfo.Compare(info) == 0 {
 			return true
 		}
@@ -182,12 +190,33 @@ func saveLocalCacheVersion() {
 	_ = json.NewEncoder(file).Encode(localCacheVersions)
 }
 
+func readLocalHoldVersion() {
+	filename := filepath.Join(conf.CachePath, "hold.json")
+	buf, err := ioutil.ReadFile(filename)
+	if err != nil {
+		return
+	}
+	holdVersions = make([]string, 0)
+	_ = json.Unmarshal(buf, &holdVersions)
+}
+
+func saveLocalHoldVersion() {
+	filename := filepath.Join(conf.CachePath, "hold.json")
+	file, err := os.OpenFile(filename, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0777)
+	if err != nil {
+		printError(err.Error())
+		os.Exit(1)
+	}
+	defer file.Close()
+	_ = json.NewEncoder(file).Encode(holdVersions)
+}
+
 func readLocalInstallVersion() {
 	fileInfoList, err := ioutil.ReadDir(conf.InstallPath)
 	if err != nil {
 		return
 	}
-	localInstallVersion = make([]*version.Version, 0)
+	localInstallVersions = make([]*version.Version, 0)
 	for _, info := range fileInfoList {
 		if !info.IsDir() {
 			continue
@@ -195,11 +224,11 @@ func readLocalInstallVersion() {
 
 		vInfo := version.New(info.Name())
 		if vInfo.Valid() {
-			localInstallVersion = append(localInstallVersion, vInfo)
+			localInstallVersions = append(localInstallVersions, vInfo)
 		}
 	}
 
-	version.SortV(localInstallVersion).Reverse()
+	version.SortV(localInstallVersions).Reverse()
 }
 
 func printError(msg string) {
@@ -223,7 +252,7 @@ func isInLocalCache(ver string) bool {
 
 func isInInstall(ver string) bool {
 	v := version.New(ver)
-	for _, cacheVersion := range localInstallVersion {
+	for _, cacheVersion := range localInstallVersions {
 		if version.Equal(*v, *cacheVersion) {
 			return true
 		}

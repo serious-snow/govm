@@ -47,5 +47,7 @@ func uninstallVersion(version string) {
 		return
 	}
 
+	unhold(version)
+
 	Println(version, "卸载成功")
 }
