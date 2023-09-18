@@ -95,7 +95,7 @@ func silentInstall(version string, oldSha string) error {
 	newFileName := filepath.Join(conf.CachePath, fileName)
 	download := true
 	if path.FileIsExisted(newFileName) {
-		if utils.CheckSha256(newFileName, oldSha) {
+		if len(oldSha) == 0 || utils.CheckSha256(newFileName, oldSha) {
 			download = false
 		} else {
 			_ = os.Remove(newFileName)

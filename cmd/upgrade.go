@@ -66,7 +66,6 @@ func upgradeVersions(m map[string][]*version.Version) {
 		installCount   int
 		uninstallCount int
 		ignoreCount    int
-		needUseVersion string
 	)
 
 	for s, versions := range m {
@@ -103,15 +102,15 @@ func upgradeVersions(m map[string][]*version.Version) {
 
 			// 如果卸载的是当前正在使用的 就设置为刚刚的最新版本
 			if version.Equal(currentUse, *v) {
-				needUseVersion = s
+				readLocalInstallVersion()
+				useVersion(s)
+				readCurrentUseVersion()
 			}
 		}
 	}
 
-	readLocalInstallVersion()
-
-	if len(needUseVersion) != 0 {
-		useVersion(needUseVersion)
+	if installCount+uninstallCount != 0 {
+		readLocalInstallVersion()
 	}
 
 	Printf("共升级 %d 个版本, 安装了 %d 个版本, 卸载了 %d 个版本，忽略了 %d 个版本", len(m), installCount, uninstallCount, ignoreCount)

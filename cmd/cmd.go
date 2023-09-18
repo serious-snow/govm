@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"runtime"
@@ -166,7 +165,7 @@ func isInstall(info version.Version) bool {
 
 func readLocalCacheVersion() {
 	cacheJsonPath := filepath.Join(conf.CachePath, "version.json")
-	buf, err := ioutil.ReadFile(cacheJsonPath)
+	buf, err := os.ReadFile(cacheJsonPath)
 	if err != nil {
 		return
 	}
@@ -192,7 +191,7 @@ func saveLocalCacheVersion() {
 
 func readLocalHoldVersion() {
 	filename := filepath.Join(conf.CachePath, "hold.json")
-	buf, err := ioutil.ReadFile(filename)
+	buf, err := os.ReadFile(filename)
 	if err != nil {
 		return
 	}
@@ -212,7 +211,7 @@ func saveLocalHoldVersion() {
 }
 
 func readLocalInstallVersion() {
-	fileInfoList, err := ioutil.ReadDir(conf.InstallPath)
+	fileInfoList, err := os.ReadDir(conf.InstallPath)
 	if err != nil {
 		return
 	}
