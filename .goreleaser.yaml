@@ -17,7 +17,7 @@ builds:
     flags:
       - -trimpath
     ldflags:
-      - -s -w -X github.com/serious-snow/govm/cmd.Version={{.Version}}
+      - -s -w -X github.com/serious-snow/govm/cmd.Version=v{{.Version}}
 archives:
   - format: tar.gz
     # this name template makes the OS and Arch compatible with the results of uname.
