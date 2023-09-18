@@ -25,7 +25,8 @@ const (
 )
 
 var (
-	app *cli.Command
+	app     *cli.Command
+	Version = "dev"
 )
 
 var (
@@ -89,7 +90,7 @@ func Run() error {
 			Usage:       "Manage go version",
 			UsageText:   "",
 			ArgsUsage:   "",
-			Version:     "v0.0.2",
+			Version:     Version,
 			Description: "a go version manager.\n" + printEnv(),
 			Flags: []cli.Flag{
 				&cli.BoolFlag{

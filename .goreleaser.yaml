@@ -14,7 +14,10 @@ builds:
       - windows
       - darwin
     main: ./cmds/govm
-
+    flags:
+      - -trimpath
+    ldflags:
+      - -s -w -X github.com/serious-snow/govm/cmd.Version={{.Version}}
 archives:
   - format: tar.gz
     # this name template makes the OS and Arch compatible with the results of uname.
