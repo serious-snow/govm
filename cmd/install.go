@@ -56,8 +56,8 @@ func installVersion(version string, force bool, ignore bool) {
 	}
 
 	if !isInLocalCache(version) {
-		printError("暂未找到该版本资源下载，请先执行：")
-		printCmdLine("list", "--update")
+		printError("暂未找到该版本资源下载，请执行：")
+		printCmdLine("update")
 		return
 	}
 
