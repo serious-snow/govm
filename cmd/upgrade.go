@@ -113,7 +113,7 @@ func upgradeVersions(m map[string][]*version.Version) {
 		readLocalInstallVersion()
 	}
 
-	Printf("共升级 %d 个版本, 安装了 %d 个版本, 卸载了 %d 个版本，忽略了 %d 个版本", len(m), installCount, uninstallCount, ignoreCount)
+	Printf("共升级 %d 个版本, 安装了 %d 个版本, 卸载了 %d 个版本，忽略了 %d 个版本\n", len(m), installCount, uninstallCount, ignoreCount)
 
 }
 

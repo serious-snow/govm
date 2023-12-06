@@ -62,7 +62,7 @@ func reloadAvailable() {
 	}
 
 	if len(localInstallVersions) != 0 {
-		Println("列表更新完成,本次更新 新增数量为:", len(res)-len(localCacheVersions))
+		Println("列表更新完成, 本次更新 新增数量为:", len(res)-len(localCacheVersions))
 	}
 
 	localCacheVersions = res
