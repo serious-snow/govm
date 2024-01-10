@@ -71,7 +71,6 @@ func upgradeVersions(m map[string][]*version.Version) {
 	for s, versions := range m {
 
 		canInstall := false
-
 		for _, v := range versions {
 			if !isHold(v.String()) {
 				canInstall = true
@@ -80,6 +79,7 @@ func upgradeVersions(m map[string][]*version.Version) {
 		}
 
 		if !canInstall {
+			ignoreCount += len(versions)
 			continue
 		}
 
