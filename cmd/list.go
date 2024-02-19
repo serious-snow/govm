@@ -157,6 +157,9 @@ func printUpgradeable() {
 	count := 0
 	for s, versions := range m {
 		for _, v := range versions {
+			if isHold(v.String()) {
+				continue
+			}
 			count++
 			sb.WriteString(v.String())
 			sb.WriteString(" -> ")
@@ -164,6 +167,6 @@ func printUpgradeable() {
 			sb.WriteString("\n")
 		}
 	}
-	Printf("有%d个版本可以升级：\n", count)
+	Printf("有 %d 个版本可以升级：\n", count)
 	Print(sb.String())
 }
