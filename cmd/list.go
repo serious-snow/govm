@@ -149,15 +149,22 @@ func printVersions(vs []*version.Version) {
 func printUpgradeable() {
 	m := getUpgradeableList()
 	if len(m) == 0 {
-		println("所有版本均是最新版本")
+		println("所有版本均是最新")
 		return
 	}
 
 	sb := strings.Builder{}
 	count := 0
+	sbHold := strings.Builder{}
+	holdCount := 0
 	for s, versions := range m {
 		for _, v := range versions {
 			if isHold(v.String()) {
+				holdCount++
+				sbHold.WriteString(v.String())
+				sbHold.WriteString(" -> ")
+				sbHold.WriteString(s)
+				sbHold.WriteString("\n")
 				continue
 			}
 			count++
@@ -167,6 +174,15 @@ func printUpgradeable() {
 			sb.WriteString("\n")
 		}
 	}
-	Printf("有 %d 个版本可以升级：\n", count)
-	Print(sb.String())
+
+	Printf("%d 个有最新版本，其中：\n可升级：%d 个\n被保留：%d 个\n", count+holdCount, count, holdCount)
+
+	if count != 0 {
+		Println("可升级的版本：")
+		Print(sb.String())
+	}
+	if holdCount != 0 {
+		Println("被保留的版本：")
+		Print(sbHold.String())
+	}
 }

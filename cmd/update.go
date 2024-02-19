@@ -22,16 +22,12 @@ func printCanUpgradeCount() {
 	canUpgradeCount := 0
 
 	for _, versions := range m {
-		for _, version := range versions {
-			if !isHold(version.String()) {
-				canUpgradeCount++
-			}
-		}
+		canUpgradeCount += len(versions)
 	}
 
 	if canUpgradeCount == 0 {
 		return
 	}
 
-	Printf("有 %d 个版本可以升级到最新, 执行 %s 查看更多信息\n", canUpgradeCount, getCmdLine("list --upgradeable"))
+	Printf("%d 个版本有最新版本, 执行 %s 查看更多信息\n", canUpgradeCount, getCmdLine("list --upgradeable"))
 }
