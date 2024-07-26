@@ -31,11 +31,14 @@ func useVersion(version string) {
 	version = trimVersion(version)
 
 	if !isInInstall(version) {
-		printError("该版本未安装，请先安装，执行：")
-		printCmdLine("install", version)
-		return
+		suggest := suggestVersion(version, ActionUse)
+		if suggest == "" {
+			printError("该版本未安装，请先安装，执行：")
+			printCmdLine("install", version)
+			return
+		}
+		version = suggest
 	}
-
 	goRoot := filepath.Join(conf.InstallPath, version, "go")
 	if !path.PathIsExisted(goRoot) {
 		printError("go 文件夹不存在，请重新安装")

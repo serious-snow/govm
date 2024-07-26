@@ -25,7 +25,10 @@ const (
 )
 
 var (
-	app     *cli.Command
+	app *cli.Command
+
+	flagNoSuggest bool
+
 	Version = "dev"
 )
 
@@ -98,9 +101,15 @@ func Run() error {
 					Usage:      "disable colors",
 					Persistent: true,
 				},
+				&cli.BoolFlag{
+					Name:        "no-suggest",
+					Usage:       "disable suggest",
+					Persistent:  true,
+					Destination: &flagNoSuggest,
+				},
 			},
 			Before: func(c *cli.Context) error {
-				color.NoColor = c.Bool("no-colors")
+				color.NoColor = color.NoColor || c.Bool("no-colors")
 				return nil
 			},
 
@@ -341,4 +350,55 @@ func getDownloadFilename(version string) string {
 	}
 
 	return fmt.Sprintf("go%s.%s-%s.%s", version, runtime.GOOS, runtime.GOARCH, suffix)
+}
+
+type Action uint16
+
+const (
+	ActionInstall Action = iota + 1
+	ActionUse
+	ActionExec
+)
+
+func suggestVersion(ver string, action Action) string {
+	if flagNoSuggest {
+		return ""
+	}
+	v := version.New(ver)
+
+	minorVersion := v.MinorVersion()
+	if v.String() != minorVersion {
+		return ""
+	}
+
+	switch action {
+	case ActionInstall:
+		vls := GetMinorGroup(localCacheVersions)[minorVersion]
+
+		for _, ve := range vls {
+			if isInInstall(ve.String()) {
+				ver = ve.String()
+				break
+			}
+		}
+
+	case ActionUse, ActionExec:
+		vls := GetMinorGroup(localInstallVersions)[minorVersion]
+		for _, ve := range vls {
+			if isInInstall(ve.String()) {
+				ver = ve.String()
+				break
+			}
+		}
+	}
+
+	return ver
+}
+
+func GetMinorGroup(list []*version.Version) map[string][]*version.Version {
+	m := make(map[string][]*version.Version)
+	for _, v := range list {
+		m[v.MinorVersion()] = append(m[v.MinorVersion()], v)
+	}
+	return m
 }

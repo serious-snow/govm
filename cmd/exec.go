@@ -21,9 +21,13 @@ func execCommand() *cli.Command {
 			}
 			version := c.Args().Get(0)
 			if !isInInstall(version) {
-				printError("该版本未安装，请先安装，执行：")
-				printCmdLine("install", version)
-				return nil
+				suggest := suggestVersion(version, ActionExec)
+				if suggest == "" {
+					printError("该版本未安装，请先安装，执行：")
+					printCmdLine("install", version)
+					return nil
+				}
+				version = suggest
 			}
 
 			goRoot := filepath.Join(conf.InstallPath, version, "go")
