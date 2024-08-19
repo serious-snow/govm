@@ -42,11 +42,12 @@ func cacheCommand() *cli.Command {
 							continue
 						}
 
-						if info.Name() == "version.json" {
-							continue
+						switch filepath.Ext(info.Name()) {
+						case ".json":
+						default:
+							_ = os.Remove(filepath.Join(conf.CachePath, info.Name()))
 						}
 
-						_ = os.Remove(filepath.Join(conf.CachePath, info.Name()))
 					}
 					return nil
 				},
@@ -72,11 +73,12 @@ func cacheCommand() *cli.Command {
 							continue
 						}
 
-						if info.Name() == "version.json" {
-							continue
+						switch filepath.Ext(info.Name()) {
+						case ".json":
+						default:
+							size += info.Size()
 						}
 
-						size += info.Size()
 					}
 					return nil
 				},

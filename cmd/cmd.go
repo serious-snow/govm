@@ -370,15 +370,19 @@ func suggestVersion(ver string, action Action) string {
 	if v.String() != minorVersion {
 		return ""
 	}
-
+	ver = ""
 	switch action {
 	case ActionInstall:
 		vls := GetMinorGroup(localCacheVersions)[minorVersion]
-
 		for _, ve := range vls {
 			if isInInstall(ve.String()) {
 				ver = ve.String()
 				break
+			}
+		}
+		if ver == "" {
+			if len(vls) != 0 {
+				ver = vls[0].String()
 			}
 		}
 

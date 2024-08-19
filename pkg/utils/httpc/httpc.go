@@ -31,7 +31,7 @@ func Get(url string) ([]byte, error) {
 		return nil, err
 	}
 	if resp.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("http请求错误，错误的状态码: %d", resp.StatusCode)
+		return nil, fmt.Errorf("http请求错误，url: %s，状态码: %d", url, resp.StatusCode)
 	}
 	return ioutil.ReadAll(resp.Body)
 }
