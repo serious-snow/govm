@@ -55,6 +55,7 @@ func listCommand() *cli.Command {
 }
 
 func reloadAvailable() {
+	Println("正在拉取版本列表...")
 	res, err := getAvailable()
 	if err != nil {
 		printError("列表更新失败：" + err.Error())

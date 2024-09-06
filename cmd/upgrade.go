@@ -1,6 +1,8 @@
 package cmd
 
 import (
+	"strings"
+
 	"github.com/urfave/cli/v3"
 
 	"github.com/serious-snow/govm/pkg/version"
@@ -57,7 +59,29 @@ func upgrade(v string) {
 }
 
 func upgradeAll() {
-	upgradeVersions(getUpgradeableList())
+	m := getUpgradeableList()
+	if len(m) == 0 {
+		Println("没有可升级的版本")
+		return
+	}
+	sb := strings.Builder{}
+	for s, versions := range m {
+		for _, v := range versions {
+			if isHold(v.String()) {
+				continue
+			}
+			sb.WriteString(v.String())
+			sb.WriteString(" -> ")
+			sb.WriteString(s)
+			sb.WriteString("\n")
+		}
+	}
+
+	if len(sb.String()) != 0 {
+		Println("升级版本：")
+		Print(sb.String())
+	}
+	upgradeVersions(m)
 }
 
 func upgradeVersions(m map[string][]*version.Version) {
