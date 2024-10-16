@@ -56,7 +56,7 @@ func checkGovmUpdate(ctx context.Context) {
 		return
 	}
 
-	Printf("govm 发现新版本：%s，执行以下命令即可升级：%s\n\n", release.GetTagName(), getCmdLine("upgrade govm"))
+	Printf("govm 发现新版本：%s，升级命令：%s\n\n", release.GetTagName(), getCmdLine("upgrade govm"))
 }
 
 func upgradeGOVM(ctx context.Context) {
