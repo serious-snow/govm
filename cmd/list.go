@@ -60,12 +60,13 @@ func reloadAvailable() {
 	Println("正在拉取 go 最新版本列表...")
 	spin := spinner.New(spinner.CharSets[14], time.Millisecond*100)
 	spin.Start()
-	defer spin.Stop()
 	res, err := getAvailable()
 	if err != nil {
+		spin.Stop()
 		printError("列表更新失败：" + err.Error())
 		return
 	}
+	spin.Stop()
 
 	if len(localInstallVersions) != 0 {
 		Println("列表更新完成, 本次更新 新增数量为:", len(res)-len(remoteVersion.GoVersions))

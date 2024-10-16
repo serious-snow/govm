@@ -35,13 +35,14 @@ func checkGovmUpdate(ctx context.Context) {
 
 	spin := spinner.New(spinner.CharSets[14], time.Millisecond*100)
 	spin.Start()
-	defer spin.Stop()
 
 	release, _, err := gitClient.Repositories.GetLatestRelease(ctx, GitUser, GitRepo)
 	if err != nil {
+		spin.Stop()
 		Printf("govm 检查更新失败:%s\n", err)
 		return
 	}
+	spin.Stop()
 	//if remoteVersion.govmVersion == release.GetTagName() {
 	//	return
 	//}
@@ -55,7 +56,7 @@ func checkGovmUpdate(ctx context.Context) {
 		return
 	}
 
-	Printf("govm 发现新版本：%s\n\n", lastVersion)
+	Printf("govm 发现新版本：%s，执行以下命令即可升级：%s\n\n", release.GetTagName(), getCmdLine("upgrade govm"))
 }
 
 func upgradeGOVM(ctx context.Context) {
