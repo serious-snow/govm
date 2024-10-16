@@ -15,12 +15,18 @@ func upgradeCommand() *cli.Command {
 		UsageText: getCmdLine("upgrade"),
 		Action: func(c *cli.Context) error {
 			v := c.Args().Get(0)
-			if v != "" {
-				upgrade(v)
+			switch v {
+			case "govm":
+				upgradeGOVM(c.Context)
+				return nil
+			default:
+				if v != "" {
+					upgrade(v)
+					return nil
+				}
+				upgradeAll()
 				return nil
 			}
-			upgradeAll()
-			return nil
 		},
 	}
 }
@@ -142,7 +148,7 @@ func upgradeVersions(m map[string][]*version.Version) {
 }
 
 func getPatchNewestVersion(v version.Version) *version.Version {
-	for _, v2 := range localCacheVersions {
+	for _, v2 := range remoteVersion.GoVersions {
 		if v2.Major == v.Major && v2.Minor == v.Minor {
 			return v2
 		}
@@ -177,7 +183,7 @@ func getUpgradeableList() map[string][]*version.Version {
 // 1.18->1.18.10
 func GetPatchNewestVersionMap() map[string]*version.Version {
 	result := make(map[string]*version.Version)
-	for _, cacheVersion := range localCacheVersions {
+	for _, cacheVersion := range remoteVersion.GoVersions {
 		old := cacheVersion.MinorVersion()
 		if _, ok := result[old]; !ok {
 			result[old] = cacheVersion

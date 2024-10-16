@@ -10,6 +10,7 @@ func updateCommand() *cli.Command {
 		Usage:     "Update available version list",
 		UsageText: getCmdLine("update"),
 		Action: func(c *cli.Context) error {
+			checkGovmUpdate(c.Context)
 			reloadAvailable()
 			printCanUpgradeCount()
 			return nil

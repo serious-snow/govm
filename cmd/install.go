@@ -108,6 +108,7 @@ func silentInstall(version string, oldSha string) error {
 	}
 	if download {
 		Printf("开始下载：%s\n", version)
+		Printf("下载：%s\n", downloadLink+fileName)
 		err := httpc.Download(downloadLink+fileName, conf.CachePath, fileName, oldSha)
 		if err != nil {
 			return err

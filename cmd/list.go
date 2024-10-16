@@ -6,7 +6,9 @@ import (
 	"regexp"
 	"runtime"
 	"strings"
+	"time"
 
+	"github.com/briandowns/spinner"
 	"github.com/fatih/color"
 	"github.com/urfave/cli/v3"
 
@@ -36,7 +38,7 @@ func listCommand() *cli.Command {
 
 		Action: func(c *cli.Context) error {
 
-			if len(localCacheVersions) == 0 {
+			if len(remoteVersion.GoVersions) == 0 {
 				reloadAvailable()
 			}
 
@@ -55,7 +57,10 @@ func listCommand() *cli.Command {
 }
 
 func reloadAvailable() {
-	Println("正在拉取版本列表...")
+	Println("正在拉取 go 最新版本列表...")
+	spin := spinner.New(spinner.CharSets[14], time.Millisecond*100)
+	spin.Start()
+	defer spin.Stop()
 	res, err := getAvailable()
 	if err != nil {
 		printError("列表更新失败：" + err.Error())
@@ -63,11 +68,11 @@ func reloadAvailable() {
 	}
 
 	if len(localInstallVersions) != 0 {
-		Println("列表更新完成, 本次更新 新增数量为:", len(res)-len(localCacheVersions))
+		Println("列表更新完成, 本次更新 新增数量为:", len(res)-len(remoteVersion.GoVersions))
 	}
 
-	localCacheVersions = res
-	saveLocalCacheVersion()
+	remoteVersion.GoVersions = res
+	saveLocalRemoteVersion()
 }
 
 func getAvailable() ([]*version.Version, error) {
@@ -115,7 +120,7 @@ func getAvailable() ([]*version.Version, error) {
 }
 
 func printAvailable() {
-	printVersions(localCacheVersions)
+	printVersions(remoteVersion.GoVersions)
 }
 
 func printInstalled() {

@@ -20,7 +20,7 @@ linters:
 # 输出配置选项
 output:
   # colored-line-number|line-number|json|tab|checkstyle|code-climate, 默认是 "colored-line-number"
-  format: colored-line-number
+  formats: [{ format: colored-line-number }]
   # 打印有问题的代码行，默认为true
   print-issued-lines: true
   # 在问题文本的末尾打印linter名称，默认为true

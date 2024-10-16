@@ -4,7 +4,7 @@ package cmd
 
 import (
 	"fmt"
-	"io/ioutil"
+	"io"
 	"os"
 	"path/filepath"
 	"strings"
@@ -55,7 +55,7 @@ func SetEnv() {
 	}
 	defer file.Close()
 
-	buf, err := ioutil.ReadAll(file)
+	buf, err := io.ReadAll(file)
 	if err != nil {
 		return
 	}
@@ -76,4 +76,8 @@ func SetEnv() {
 
 func Symlink(oldname, newname string) error {
 	return os.Symlink(oldname, newname)
+}
+
+func replaceExecutable(currentPath, newVersionPath string) error {
+	return os.Rename(currentPath, newVersionPath)
 }

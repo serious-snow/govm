@@ -36,7 +36,7 @@ var (
 	conf                 config.Config
 	homeDir              string
 	processDir           string
-	localCacheVersions   []*version.Version
+	remoteVersion        RemoteVersion
 	localInstallVersions []*version.Version
 	holdVersions         []string
 
@@ -145,7 +145,7 @@ func Run() error {
 		//读取本地安装版本
 		readLocalInstallVersion()
 		//读取本地缓存列表
-		readLocalCacheVersion()
+		readLocalRemoteVersion()
 		//读取当前使用的版本
 		readCurrentUseVersion()
 		// 读取本地hold的版本列表
@@ -157,11 +157,26 @@ func Run() error {
 
 func printEnv() string {
 
+	sb := strings.Builder{}
+
 	if !strings.Contains(os.Getenv("PATH"), envPath) {
-		return fmt.Sprintf("\nplease set environment：%s", color.RedString(envPath))
+		sb.WriteString(fmt.Sprintf("\nplease set environment：%s", color.RedString(envPath)))
+	} else {
+		sb.WriteString("\nenvironment set success.")
 	}
 
-	return "\nenvironment set success."
+	if len(remoteVersion.GovmVersion) == 0 || Version == "dev" {
+		return sb.String()
+	}
+
+	remote := version.New(remoteVersion.GovmVersion)
+	local := version.New(Version)
+
+	if !version.Equal(*remote, *local) {
+		sb.WriteString(fmt.Sprintf("\nplease update govm to %s", color.GreenString(remoteVersion.GovmVersion)))
+	}
+
+	return sb.String()
 }
 
 func isInstall(info version.Version) bool {
@@ -173,22 +188,19 @@ func isInstall(info version.Version) bool {
 	return false
 }
 
-func readLocalCacheVersion() {
+func readLocalRemoteVersion() {
 	cacheJsonPath := filepath.Join(conf.CachePath, "version.json")
 	buf, err := os.ReadFile(cacheJsonPath)
 	if err != nil {
 		return
 	}
-	localCacheVersions = make([]*version.Version, 0)
-	_ = json.Unmarshal(buf, &localCacheVersions)
-
-	version.SortV(localCacheVersions).Reverse()
+	if json.Unmarshal(buf, &remoteVersion) != nil {
+		_ = json.Unmarshal(buf, &remoteVersion.GoVersions)
+	}
+	version.SortV(remoteVersion.GoVersions).Reverse()
 }
 
-func saveLocalCacheVersion() {
-	if len(localCacheVersions) == 0 {
-		return
-	}
+func saveLocalRemoteVersion() {
 	cacheJsonPath := filepath.Join(conf.CachePath, "version.json")
 	file, err := os.OpenFile(cacheJsonPath, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0777)
 	if err != nil {
@@ -196,7 +208,7 @@ func saveLocalCacheVersion() {
 		os.Exit(1)
 	}
 	defer file.Close()
-	_ = json.NewEncoder(file).Encode(localCacheVersions)
+	_ = json.NewEncoder(file).Encode(remoteVersion)
 }
 
 func readLocalHoldVersion() {
@@ -251,7 +263,7 @@ func printInfo(msg string) {
 func isInLocalCache(ver string) bool {
 
 	v := version.New(ver)
-	for _, cacheVersion := range localCacheVersions {
+	for _, cacheVersion := range remoteVersion.GoVersions {
 		if version.Equal(*v, *cacheVersion) {
 			return true
 		}
@@ -373,7 +385,7 @@ func suggestVersion(ver string, action Action) string {
 	ver = ""
 	switch action {
 	case ActionInstall:
-		vls := GetMinorGroup(localCacheVersions)[minorVersion]
+		vls := GetMinorGroup(remoteVersion.GoVersions)[minorVersion]
 		for _, ve := range vls {
 			if isInInstall(ve.String()) {
 				ver = ve.String()

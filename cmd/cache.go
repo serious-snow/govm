@@ -1,7 +1,6 @@
 package cmd
 
 import (
-	"io/ioutil"
 	"os"
 	"path/filepath"
 
@@ -32,7 +31,7 @@ func cacheCommand() *cli.Command {
 					if !path.PathIsExisted(conf.CachePath) {
 						return nil
 					}
-					fileInfoList, err := ioutil.ReadDir(conf.CachePath)
+					fileInfoList, err := os.ReadDir(conf.CachePath)
 					if err != nil {
 						return nil
 					}
@@ -63,7 +62,7 @@ func cacheCommand() *cli.Command {
 					if !path.PathIsExisted(conf.CachePath) {
 						return nil
 					}
-					fileInfoList, err := ioutil.ReadDir(conf.CachePath)
+					fileInfoList, err := os.ReadDir(conf.CachePath)
 					if err != nil {
 						return nil
 					}
@@ -76,7 +75,9 @@ func cacheCommand() *cli.Command {
 						switch filepath.Ext(info.Name()) {
 						case ".json":
 						default:
-							size += info.Size()
+							if info, err := info.Info(); err == nil {
+								size += info.Size()
+							}
 						}
 
 					}

@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
+	"path/filepath"
 	"strings"
 	"time"
 
@@ -125,6 +126,32 @@ func elevate(cmd *exec.Cmd) error {
 	params := strings.Join(cmd.Args, " ")
 
 	_, err = oleutil.CallMethod(shellDispatch, "ShellExecute", filePath, params, "", verb)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// replaceExecutable 使用Windows的cmd命令，在程序退出后替换当前的可执行文件
+func replaceExecutable(newFile, oldFile string) error {
+	// 生成一个批处理文件，用于替换并重启
+	batchFile := filepath.Join(os.TempDir(), "replace_govm.bat")
+	batchContent := fmt.Sprintf(`@echo off
+timeout /t 2 >nul
+move /y "%s" "%s"
+start "" "%s"
+del "%%~f0"`, newFile, oldFile, oldFile)
+
+	// 将批处理内容写入文件
+	err := os.WriteFile(batchFile, []byte(batchContent), 0644)
+	if err != nil {
+		return err
+	}
+
+	// 执行批处理文件
+	cmd := exec.Command("cmd", "/C", batchFile)
+	err = cmd.Start()
 	if err != nil {
 		return err
 	}

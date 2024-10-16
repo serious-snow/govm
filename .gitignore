@@ -5,3 +5,4 @@ data
 govm.exe
 ./assets/uac.exe
 dist/
+/govm
