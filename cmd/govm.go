@@ -50,12 +50,12 @@ func checkGovmUpdate(ctx context.Context) {
 	saveLocalRemoteVersion()
 	lastVersion := version.New(release.GetTagName())
 	currentVersion := version.New(Version)
-	if !version.Equal(*lastVersion, *currentVersion) {
+	if version.Equal(*lastVersion, *currentVersion) {
 		Printf("govm 已是最新版本\n\n")
 		return
 	}
 
-	Printf("govm 发现新版本：%s\n", lastVersion)
+	Printf("govm 发现新版本：%s\n\n", lastVersion)
 }
 
 func upgradeGOVM(ctx context.Context) {
