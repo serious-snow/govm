@@ -82,7 +82,7 @@ func upgradeGOVM(ctx context.Context) {
 	sys := fmt.Sprintf("%s_%s", runtime.GOOS, runtime.GOARCH)
 	var asset *github.ReleaseAsset
 	for _, v := range release.Assets {
-		if strings.Contains(asset.GetName(), sys) {
+		if strings.Contains(v.GetName(), sys) {
 			asset = v
 			break
 		}
