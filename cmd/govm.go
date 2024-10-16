@@ -127,7 +127,7 @@ func upgradeGOVM(ctx context.Context) {
 		return
 	}
 
-	_ = os.Chmod(execFile, os.ModePerm)
+	_ = os.Chmod(tempFile, os.ModePerm)
 	err = replaceExecutable(tempFile, os.Args[0])
 	if err != nil {
 		Println("govm 升级失败：", err)
