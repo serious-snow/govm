@@ -141,11 +141,23 @@ func upgradeGOVM(ctx context.Context) {
 	}
 
 	_ = os.Chmod(tempFile, os.ModePerm)
-	err = replaceExecutable(tempFile, os.Args[0])
+	err = replaceExecutable(tempFile, getExecutable())
 	if err != nil {
 		Println("govm 升级失败：", err)
 		return
 	}
 
 	Println("govm 升级成功")
+}
+
+func getExecutable() string {
+	ex, err := os.Executable()
+	if err != nil {
+		return os.Args[0]
+	}
+	ev, err := filepath.EvalSymlinks(ex)
+	if err != nil {
+		return ex
+	}
+	return ev
 }
