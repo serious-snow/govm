@@ -26,7 +26,7 @@ func PathIsExisted(name string) bool {
 // MakeDir 创建文件夹
 func MakeDir(dir string) error {
 	if !PathIsExisted(dir) {
-		return os.MkdirAll(dir, 0777)
+		return os.MkdirAll(dir, 0o777)
 	}
 	return nil
 }
@@ -73,14 +73,13 @@ func DecompressTar(from, to string) error {
 			continue
 		}
 		// 打开文件
-		fw, err := createFile(filepath.Join(to, h.Name), os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0755)
+		fw, err := createFile(filepath.Join(to, h.Name), os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0o755)
 		if err != nil {
 			return err
 		}
-		//fw.Chmod(0755)
+		// fw.Chmod(0755)
 		// 写文件
 		_, err = io.Copy(fw, tr)
-
 		if err != nil {
 			fw.Close()
 			return err
@@ -125,7 +124,7 @@ func copyFile(from *zip.File, to string) error {
 	}
 	defer inFile.Close()
 	// 打开文件
-	fw, err := createFile(to, os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0755)
+	fw, err := createFile(to, os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0o755)
 	if err != nil {
 		return err
 	}
@@ -141,7 +140,6 @@ func createFile(name string, flag int, perm os.FileMode) (*os.File, error) {
 	dir, _ := filepath.Split(name)
 
 	err := MakeDir(dir)
-
 	if err != nil {
 		return nil, err
 	}

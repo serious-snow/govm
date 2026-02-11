@@ -1,10 +1,9 @@
 package cmd
 
 import (
-	"encoding/xml"
-	"fmt"
-	"regexp"
+	"encoding/json"
 	"runtime"
+	"sort"
 	"strings"
 	"time"
 
@@ -14,7 +13,6 @@ import (
 
 	"github.com/serious-snow/govm/pkg/utils/httpc"
 	"github.com/serious-snow/govm/pkg/version"
-	"github.com/serious-snow/govm/types"
 )
 
 func listCommand() *cli.Command {
@@ -37,8 +35,7 @@ func listCommand() *cli.Command {
 		},
 
 		Action: func(c *cli.Context) error {
-
-			if len(remoteVersion.GoVersions) == 0 {
+			if len(remoteVersion.Go) == 0 {
 				reloadAvailable()
 			}
 
@@ -51,7 +48,6 @@ func listCommand() *cli.Command {
 				printAvailable()
 			}
 			return nil
-
 		},
 	}
 }
@@ -69,59 +65,65 @@ func reloadAvailable() {
 	spin.Stop()
 
 	if len(localInstallVersions) != 0 {
-		Println("列表更新完成, 本次更新 新增数量为:", len(res)-len(remoteVersion.GoVersions))
+		Println("列表更新完成, 本次更新 新增数量为:", len(res)-len(remoteVersion.Go))
 	}
 
-	remoteVersion.GoVersions = res
+	remoteVersion.Go = res
 	saveLocalRemoteVersion()
 }
 
-func getAvailable() ([]*version.Version, error) {
-	//https://storage.googleapis.com/golang/?prefix=go&marker=
-	link := downloadLink + "?prefix=go&marker="
-	suffix := "tar\\.gz"
-	if isWin {
-		suffix = "zip"
-	}
-	var (
-		buf     []byte
-		err     error
-		res     []*version.Version
-		result  types.ListBucketResult
-		goOS    = runtime.GOOS
-		goArch  = runtime.GOARCH
-		reg     = regexp.MustCompile(fmt.Sprintf("^go(.*)\\.%s-%s\\.%s$", goOS, goArch, suffix))
-		newLink = link
-	)
-	for {
-		buf, err = httpc.Get(newLink)
-		if err != nil {
-			return nil, err
-		}
-		err = xml.Unmarshal(buf, &result)
-		if err != nil {
-			return nil, err
-		}
+func getAvailable() ([]*GoVersionInfo, error) {
+	// https://go.dev/dl/?mode=json&include=all
+	link := downloadLink + "?mode=json&include=all"
 
-		for _, content := range result.Contents {
-			if reg.MatchString(content.Key) {
-				res = append(res, version.New(reg.FindStringSubmatch(content.Key)[1]))
+	var result []*ListGoVersionResponse
+	buf, err := httpc.Get(link)
+	if err != nil {
+		return nil, err
+	}
+	if err = json.Unmarshal(buf, &result); err != nil {
+		return nil, err
+	}
+	list := make([]*GoVersionInfo, 0, len(result))
+
+	seen := map[string]struct{}{}
+	for _, response := range result {
+		for _, file := range response.Files {
+
+			vv := trimVersion(file.Version)
+			if file.Kind != "archive" {
+				continue
 			}
-		}
-		if result.NextMarker == "" {
-			break
-		}
+			if file.Os != runtime.GOOS || file.Arch != runtime.GOARCH {
+				continue
+			}
+			if _, ok := seen[vv]; ok {
+				continue
+			}
+			seen[vv] = struct{}{}
 
-		newLink = link + result.NextMarker
-
-		result.Reset()
+			list = append(list, &GoVersionInfo{
+				Filename: file.Filename,
+				Sha256:   file.Sha256,
+				Size:     file.Size,
+				Version:  *version.New(vv),
+			})
+		}
 	}
-	version.SortV(res).Reverse()
-	return res, nil
+
+	sort.Slice(list, func(i, j int) bool {
+		return list[i].Version.Greater(list[j].Version)
+	})
+
+	return list, nil
 }
 
 func printAvailable() {
-	printVersions(remoteVersion.GoVersions)
+	versions := make([]*version.Version, 0, len(remoteVersion.Go))
+	for _, v := range remoteVersion.Go {
+		versions = append(versions, &v.Version)
+	}
+	printVersions(versions)
 }
 
 func printInstalled() {

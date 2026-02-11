@@ -49,7 +49,7 @@ func SetEnv() {
 		return
 	}
 
-	file, err := os.OpenFile(env, os.O_CREATE|os.O_APPEND|os.O_RDWR, 0644)
+	file, err := os.OpenFile(env, os.O_CREATE|os.O_APPEND|os.O_RDWR, 0o644)
 	if err != nil {
 		return
 	}
@@ -64,8 +64,8 @@ func SetEnv() {
 		return
 	}
 
-	//showSetEnv = os.Setenv("PATH", os.Getenv("PATH")+string(os.PathListSeparator)+linkPath) != nil
-	//Println(os.Getenv("PATH"))
+	// showSetEnv = os.Setenv("PATH", os.Getenv("PATH")+string(os.PathListSeparator)+linkPath) != nil
+	// Println(os.Getenv("PATH"))
 	_, _ = file.WriteString("\nexport PATH=$PATH:")
 	_, _ = file.WriteString(envPath)
 	_, _ = file.WriteString("\n")

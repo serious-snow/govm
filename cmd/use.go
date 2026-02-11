@@ -27,7 +27,6 @@ func useCommand() *cli.Command {
 }
 
 func useVersion(version string) {
-
 	version = trimVersion(version)
 
 	if !isInInstall(version) {

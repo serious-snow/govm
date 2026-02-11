@@ -61,7 +61,6 @@ func upgrade(v string) {
 			&current,
 		},
 	})
-
 }
 
 func upgradeAll() {
@@ -91,7 +90,6 @@ func upgradeAll() {
 }
 
 func upgradeVersions(m map[string][]*version.Version) {
-
 	var (
 		installCount   int
 		uninstallCount int
@@ -114,7 +112,7 @@ func upgradeVersions(m map[string][]*version.Version) {
 		}
 
 		if !isInInstall(s) {
-			if err := silentInstall(s, ""); err != nil {
+			if err := silentInstall(s, false); err != nil {
 				printError(err.Error())
 				continue
 			}
@@ -144,19 +142,18 @@ func upgradeVersions(m map[string][]*version.Version) {
 	}
 
 	Printf("共升级 %d 个版本, 安装了 %d 个版本, 卸载了 %d 个版本，忽略了 %d 个版本\n", len(m), installCount, uninstallCount, ignoreCount)
-
 }
 
 func getPatchNewestVersion(v version.Version) *version.Version {
-	for _, v2 := range remoteVersion.GoVersions {
-		if v2.Major == v.Major && v2.Minor == v.Minor {
-			return v2
+	for _, v2 := range remoteVersion.Go {
+		if v2.Version.Major == v.Major && v2.Version.Minor == v.Minor {
+			return &v2.Version
 		}
 	}
 	return nil
 }
 
-//获取可以更新的列表
+// 获取可以更新的列表
 
 func getUpgradeableList() map[string][]*version.Version {
 	result := make(map[string][]*version.Version)
@@ -183,10 +180,10 @@ func getUpgradeableList() map[string][]*version.Version {
 // 1.18->1.18.10
 func GetPatchNewestVersionMap() map[string]*version.Version {
 	result := make(map[string]*version.Version)
-	for _, cacheVersion := range remoteVersion.GoVersions {
-		old := cacheVersion.MinorVersion()
+	for _, cacheVersion := range remoteVersion.Go {
+		old := cacheVersion.Version.MinorVersion()
 		if _, ok := result[old]; !ok {
-			result[old] = cacheVersion
+			result[old] = &cacheVersion.Version
 		}
 	}
 	return result

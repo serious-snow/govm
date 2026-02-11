@@ -100,7 +100,7 @@ func (v *Version) Parse(version string) {
 
 func (v Version) String() string {
 	sb := strings.Builder{}
-	//sb.WriteString("v")
+	// sb.WriteString("v")
 	sb.WriteString(strconv.Itoa(v.Major))
 	sb.WriteString(".")
 	sb.WriteString(strconv.Itoa(v.Minor))
@@ -136,6 +136,18 @@ func (v Version) Valid() bool {
 
 func (v Version) Compare(b Version) int {
 	return Compare(v, b)
+}
+
+func (v Version) Equal(b Version) bool {
+	return Compare(v, b) == 0
+}
+
+func (v Version) Greater(b Version) bool {
+	return Compare(v, b) > 0
+}
+
+func (v Version) Less(b Version) bool {
+	return Compare(v, b) < 0
 }
 
 func Equal(a, b Version) bool {

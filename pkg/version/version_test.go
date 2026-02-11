@@ -7,7 +7,7 @@ import (
 )
 
 func TestVInfo_MarshalJSON(t *testing.T) {
-	var ss = []*Version{
+	ss := []*Version{
 		{
 			Major: 1,
 			Minor: 1,
@@ -24,5 +24,4 @@ func TestVInfo_MarshalJSON(t *testing.T) {
 	s2 := make([]*Version, 0)
 	fmt.Println(json.Unmarshal(buf, &s2))
 	fmt.Println(s2)
-
 }

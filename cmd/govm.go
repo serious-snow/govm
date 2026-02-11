@@ -17,9 +17,7 @@ import (
 	"github.com/serious-snow/govm/pkg/version"
 )
 
-var (
-	gitClient = github.NewClient(nil)
-)
+var gitClient = github.NewClient(nil)
 
 const (
 	GitUser = "serious-snow"
@@ -43,11 +41,25 @@ func checkGovmUpdate(ctx context.Context) {
 		return
 	}
 	spin.Stop()
-	//if remoteVersion.govmVersion == release.GetTagName() {
-	//	return
-	//}
 
-	remoteVersion.GovmVersion = release.GetTagName()
+	sys := fmt.Sprintf("%s_%s", runtime.GOOS, runtime.GOARCH)
+	var asset *github.ReleaseAsset
+	for _, v := range release.Assets {
+		if strings.Contains(v.GetName(), sys) {
+			asset = v
+			break
+		}
+	}
+	if asset == nil {
+		Printf("govm 已是最新版本\n\n")
+		return
+	}
+
+	remoteVersion.Govm = GovmVersionInfo{
+		Version: release.GetTagName(),
+		Size:    asset.GetSize(),
+	}
+
 	saveLocalRemoteVersion()
 	lastVersion := version.New(release.GetTagName())
 	currentVersion := version.New(Version)

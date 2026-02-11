@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"errors"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -10,6 +11,7 @@ import (
 	"github.com/serious-snow/govm/pkg/utils"
 	"github.com/serious-snow/govm/pkg/utils/httpc"
 	"github.com/serious-snow/govm/pkg/utils/path"
+	"github.com/serious-snow/govm/pkg/version"
 )
 
 func installCommand() *cli.Command {
@@ -66,25 +68,7 @@ func installVersion(version string, force bool, ignore bool) {
 		return
 	}
 
-	oldSha := ""
-
-	fileName := getDownloadFilename(version)
-
-	if !ignore {
-		b, err := httpc.Get(downloadLink + fileName + ".sha256")
-		if err != nil {
-			printError("暂未找到该版本sha256资源，请尝试忽略hash校验，执行：")
-			if force {
-				printCmdLine("install", "--force", "--ignore-sha256", version)
-			} else {
-				printCmdLine("install", "--ignore-sha256", version)
-			}
-			return
-		}
-		oldSha = string(b)
-	}
-
-	if err := silentInstall(version, oldSha); err != nil {
+	if err := silentInstall(version, true); err != nil {
 		printError(err.Error())
 		return
 	}
@@ -93,29 +77,46 @@ func installVersion(version string, force bool, ignore bool) {
 	printCmdLine("use", version)
 }
 
-func silentInstall(version string, oldSha string) error {
+func silentInstall(ver string, checkSha256 bool) error {
+	var versionInfo *GoVersionInfo
+	version := version.New(ver)
+	for _, goVersion := range remoteVersion.Go {
+		if version.Equal(goVersion.Version) {
+			versionInfo = goVersion
+			break
+		}
+	}
+	if versionInfo == nil {
+		return errors.New("暂未找到该版本资源下载")
+	}
 
-	fileName := getDownloadFilename(version)
+	filename := versionInfo.Filename
 
-	newFileName := filepath.Join(conf.CachePath, fileName)
+	oldSha := ""
+
+	if !checkSha256 {
+		oldSha = versionInfo.Sha256
+	}
+
+	newFileName := filepath.Join(conf.CachePath, filename)
 	download := true
 	if path.FileIsExisted(newFileName) {
-		if len(oldSha) == 0 || utils.CheckSha256(newFileName, oldSha) {
+		if oldSha == "" || utils.CheckSha256(newFileName, oldSha) {
 			download = false
 		} else {
 			_ = os.Remove(newFileName)
 		}
 	}
 	if download {
-		Printf("开始下载：%s\n", version)
-		Printf("下载：%s\n", downloadLink+fileName)
-		err := httpc.Download(downloadLink+fileName, conf.CachePath, fileName, oldSha)
+		Printf("开始下载：%s\n", version.String())
+		Printf("下载：%s\n", downloadLink+filename)
+		err := httpc.Download(downloadLink+filename, conf.CachePath, filename, oldSha)
 		if err != nil {
 			return err
 		}
 	}
 	// 然后解压到install文件夹
-	toPath := filepath.Join(conf.InstallPath, version)
+	toPath := filepath.Join(conf.InstallPath, version.String())
 	err := path.Decompress(newFileName, toPath)
 	if err != nil {
 		_ = os.RemoveAll(toPath)

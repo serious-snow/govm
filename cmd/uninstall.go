@@ -27,7 +27,6 @@ func uninstallCommand() *cli.Command {
 }
 
 func uninstallVersion(version string) {
-
 	version = trimVersion(version)
 
 	if !isInInstall(version) {
@@ -38,7 +37,7 @@ func uninstallVersion(version string) {
 		fileName := getDownloadFilename(version)
 
 		if path.FileIsExisted(fileName) {
-			os.Remove(fileName)
+			_ = os.Remove(fileName)
 		}
 	}()
 	err := os.RemoveAll(filepath.Join(conf.InstallPath, version))

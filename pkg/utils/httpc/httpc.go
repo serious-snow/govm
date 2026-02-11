@@ -15,11 +15,9 @@ import (
 	"github.com/serious-snow/govm/pkg/utils/path"
 )
 
-var (
-	client = &http.Client{
-		Timeout: time.Minute * 15,
-	}
-)
+var client = &http.Client{
+	Timeout: time.Minute * 15,
+}
 
 func Get(url string) ([]byte, error) {
 	resp, err := client.Get(url)

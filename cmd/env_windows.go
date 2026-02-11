@@ -20,7 +20,6 @@ import (
 )
 
 func SetEnv() {
-
 	if strings.Contains(os.Getenv("PATH"), envPath) {
 		return
 	}
@@ -75,13 +74,12 @@ func Symlink(oldname, newname string) error {
 }
 
 func UacSymlink(oldname, newname string) error {
-
-	//c := strings.Join([]string{tempF.Name(), "symlink", oldname, newname}, " ")
-	//Copy
-	//mklink /D "path_to_link_directory" "path_to_target_directory"
+	// c := strings.Join([]string{tempF.Name(), "symlink", oldname, newname}, " ")
+	// Copy
+	// mklink /D "path_to_link_directory" "path_to_target_directory"
 	c := strings.Join([]string{"mklink", "/D", newname, oldname}, " ")
 	cmd := exec.Command("cmd.exe", "/C", c)
-	//cmd = exec.Command("runas", "/user:Administrator", c)
+	// cmd = exec.Command("runas", "/user:Administrator", c)
 	cmd.Stderr = os.Stderr
 	cmd.Stdout = os.Stdout
 
@@ -144,7 +142,7 @@ start "" "%s"
 del "%%~f0"`, newFile, oldFile, oldFile)
 
 	// 将批处理内容写入文件
-	err := os.WriteFile(batchFile, []byte(batchContent), 0644)
+	err := os.WriteFile(batchFile, []byte(batchContent), 0o644)
 	if err != nil {
 		return err
 	}

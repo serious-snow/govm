@@ -21,7 +21,7 @@ import (
 )
 
 const (
-	downloadLink = "https://storage.googleapis.com/golang/"
+	downloadLink = "https://go.dev/dl/"
 )
 
 var (
@@ -44,8 +44,8 @@ var (
 
 	pName    string
 	isWin    bool
-	linkPath string //软连接路径
-	envPath  string //环境变量路径
+	linkPath string // 软连接路径
+	envPath  string // 环境变量路径
 )
 
 func init() {
@@ -140,13 +140,13 @@ func Run() error {
 	}
 
 	{
-		//检查环境变量
+		// 检查环境变量
 		initEnvPath()
-		//读取本地安装版本
+		// 读取本地安装版本
 		readLocalInstallVersion()
-		//读取本地缓存列表
+		// 读取本地缓存列表
 		readLocalRemoteVersion()
-		//读取当前使用的版本
+		// 读取当前使用的版本
 		readCurrentUseVersion()
 		// 读取本地hold的版本列表
 		readLocalHoldVersion()
@@ -156,7 +156,6 @@ func Run() error {
 }
 
 func printEnv() string {
-
 	sb := strings.Builder{}
 
 	if !strings.Contains(os.Getenv("PATH"), envPath) {
@@ -165,15 +164,15 @@ func printEnv() string {
 		sb.WriteString("\nenvironment set success.")
 	}
 
-	if len(remoteVersion.GovmVersion) == 0 || Version == "dev" {
+	if len(remoteVersion.Govm.Version) == 0 || Version == "dev" {
 		return sb.String()
 	}
 
-	remote := version.New(remoteVersion.GovmVersion)
+	remote := version.New(remoteVersion.Govm.Version)
 	local := version.New(Version)
 
 	if !version.Equal(*remote, *local) {
-		sb.WriteString(fmt.Sprintf("\nplease update govm to %s", color.GreenString(remoteVersion.GovmVersion)))
+		sb.WriteString(fmt.Sprintf("\nplease update govm to %s", color.GreenString(remoteVersion.Govm.Version)))
 	}
 
 	return sb.String()
@@ -195,14 +194,13 @@ func readLocalRemoteVersion() {
 		return
 	}
 	if json.Unmarshal(buf, &remoteVersion) != nil {
-		_ = json.Unmarshal(buf, &remoteVersion.GoVersions)
+		_ = json.Unmarshal(buf, &remoteVersion.Go)
 	}
-	version.SortV(remoteVersion.GoVersions).Reverse()
 }
 
 func saveLocalRemoteVersion() {
 	cacheJsonPath := filepath.Join(conf.CachePath, "version.json")
-	file, err := os.OpenFile(cacheJsonPath, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0777)
+	file, err := os.OpenFile(cacheJsonPath, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0o777)
 	if err != nil {
 		printError(err.Error())
 		os.Exit(1)
@@ -223,7 +221,7 @@ func readLocalHoldVersion() {
 
 func saveLocalHoldVersion() {
 	filename := filepath.Join(conf.CachePath, "hold.json")
-	file, err := os.OpenFile(filename, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0777)
+	file, err := os.OpenFile(filename, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0o777)
 	if err != nil {
 		printError(err.Error())
 		os.Exit(1)
@@ -261,10 +259,9 @@ func printInfo(msg string) {
 }
 
 func isInLocalCache(ver string) bool {
-
 	v := version.New(ver)
-	for _, cacheVersion := range remoteVersion.GoVersions {
-		if version.Equal(*v, *cacheVersion) {
+	for _, cacheVersion := range remoteVersion.Go {
+		if version.Equal(*v, cacheVersion.Version) {
 			return true
 		}
 	}
@@ -323,7 +320,6 @@ func formatSize(size int64) string {
 }
 
 func initEnvPath() {
-
 	if strings.Contains(os.Getenv("PATH"), envPath) {
 		return
 	}
@@ -385,7 +381,11 @@ func suggestVersion(ver string, action Action) string {
 	ver = ""
 	switch action {
 	case ActionInstall:
-		vls := GetMinorGroup(remoteVersion.GoVersions)[minorVersion]
+		versions := make([]*version.Version, 0, len(remoteVersion.Go))
+		for _, info := range remoteVersion.Go {
+			versions = append(versions, &info.Version)
+		}
+		vls := GetMinorGroup(versions)[minorVersion]
 		for _, ve := range vls {
 			if isInInstall(ve.String()) {
 				ver = ve.String()
