@@ -38,5 +38,7 @@ func unhold(v string) {
 
 	holdVersions = tempHoldVersions
 
-	saveLocalHoldVersion()
+	if err := saveLocalHoldVersion(); err != nil {
+		printError("保存hold版本失败：" + err.Error())
+	}
 }

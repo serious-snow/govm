@@ -69,7 +69,9 @@ func reloadAvailable() {
 	}
 
 	remoteVersion.Go = res
-	saveLocalRemoteVersion()
+	if err := saveLocalRemoteVersion(); err != nil {
+		printError("保存版本列表失败：" + err.Error())
+	}
 }
 
 func getAvailable() ([]*GoVersionInfo, error) {

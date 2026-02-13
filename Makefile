@@ -2,6 +2,11 @@
 build:
 	go build -ldflags "-s -w" -trimpath -o ./ ./cmds/govm/
 
+.PHONY: test
+# 运行测试
+test:
+	go test ./...
+
 .PHONY: lint
 # 代码检查
 lint:

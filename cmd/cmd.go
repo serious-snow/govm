@@ -193,20 +193,24 @@ func readLocalRemoteVersion() {
 	if err != nil {
 		return
 	}
-	if json.Unmarshal(buf, &remoteVersion) != nil {
+	// Try to unmarshal into full struct first
+	if err := json.Unmarshal(buf, &remoteVersion); err != nil {
+		// If that fails, try unmarshaling into just the Go field for backward compatibility
 		_ = json.Unmarshal(buf, &remoteVersion.Go)
 	}
 }
 
-func saveLocalRemoteVersion() {
+func saveLocalRemoteVersion() error {
 	cacheJsonPath := filepath.Join(conf.CachePath, "version.json")
-	file, err := os.OpenFile(cacheJsonPath, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0o777)
+	file, err := os.OpenFile(cacheJsonPath, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0o644)
 	if err != nil {
-		printError(err.Error())
-		os.Exit(1)
+		return err
 	}
 	defer file.Close()
-	_ = json.NewEncoder(file).Encode(remoteVersion)
+	if err := json.NewEncoder(file).Encode(remoteVersion); err != nil {
+		return err
+	}
+	return nil
 }
 
 func readLocalHoldVersion() {
@@ -219,15 +223,17 @@ func readLocalHoldVersion() {
 	_ = json.Unmarshal(buf, &holdVersions)
 }
 
-func saveLocalHoldVersion() {
+func saveLocalHoldVersion() error {
 	filename := filepath.Join(conf.CachePath, "hold.json")
-	file, err := os.OpenFile(filename, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0o777)
+	file, err := os.OpenFile(filename, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0o644)
 	if err != nil {
-		printError(err.Error())
-		os.Exit(1)
+		return err
 	}
 	defer file.Close()
-	_ = json.NewEncoder(file).Encode(holdVersions)
+	if err := json.NewEncoder(file).Encode(holdVersions); err != nil {
+		return err
+	}
+	return nil
 }
 
 func readLocalInstallVersion() {
@@ -284,12 +290,17 @@ func readCurrentUseVersion() {
 	if err != nil {
 		return
 	}
-	to = strings.TrimPrefix(to, conf.InstallPath)
 
-	to = strings.ReplaceAll(to, "/", "")
-	to = strings.ReplaceAll(to, "\\", "")
-	to = strings.TrimSuffix(to, "go")
-	currentUse = *version.New(to)
+	// Use filepath to properly handle path separators
+	relPath, err := filepath.Rel(conf.InstallPath, to)
+	if err != nil {
+		return
+	}
+
+	// Clean the path and extract version
+	versionStr := filepath.Base(relPath)
+	versionStr = strings.TrimPrefix(versionStr, "go")
+	currentUse = *version.New(versionStr)
 }
 
 func trimVersion(version string) string {
@@ -337,7 +348,7 @@ func initEnvPath() {
 	v, err := prompt.Run()
 	if err != nil {
 		if errors.Is(err, promptui.ErrInterrupt) {
-			os.Exit(1)
+			os.Exit(130)
 		}
 	}
 

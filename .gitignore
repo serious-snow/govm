@@ -6,3 +6,10 @@ govm.exe
 ./assets/uac.exe
 dist/
 /govm
+
+# macOS system files
+.DS_Store
+pkg/.DS_Store
+
+# OMC plugin directory
+.omc/

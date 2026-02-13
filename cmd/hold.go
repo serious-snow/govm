@@ -32,7 +32,9 @@ func hold(v string) {
 
 	holdVersions = append(holdVersions, v)
 
-	saveLocalHoldVersion()
+	if err := saveLocalHoldVersion(); err != nil {
+		printError("保存hold版本失败：" + err.Error())
+	}
 }
 
 func isHold(v string) bool {

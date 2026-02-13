@@ -16,7 +16,7 @@ type Config struct {
 
 func (c *Config) Sync() {
 	allBytes, _ := yaml.Marshal(c)
-	_ = os.WriteFile(c.path, allBytes, 0o777)
+	_ = os.WriteFile(c.path, allBytes, 0o644)
 }
 
 func InitConfig(processDir, configPath string) (conf Config, err error) {
@@ -28,7 +28,7 @@ func InitConfig(processDir, configPath string) (conf Config, err error) {
 			path:        configPath,
 		}
 		allBytes, _ = yaml.Marshal(conf)
-		err = os.WriteFile(configPath, allBytes, 0o777)
+		err = os.WriteFile(configPath, allBytes, 0o644)
 		return
 	}
 	err = yaml.Unmarshal(allBytes, &conf)

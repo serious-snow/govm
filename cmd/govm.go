@@ -60,7 +60,10 @@ func checkGovmUpdate(ctx context.Context) {
 		Size:    asset.GetSize(),
 	}
 
-	saveLocalRemoteVersion()
+	if err := saveLocalRemoteVersion(); err != nil {
+		Println("保存版本信息失败：", err)
+		return
+	}
 	lastVersion := version.New(release.GetTagName())
 	currentVersion := version.New(Version)
 	if version.Equal(*lastVersion, *currentVersion) {

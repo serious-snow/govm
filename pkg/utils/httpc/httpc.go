@@ -55,7 +55,7 @@ func Download(url, dir, fileName, sha256v string) (returnErr error) {
 		}
 	}()
 
-	resp, err := http.Get(url)
+	resp, err := client.Get(url)
 	if resp != nil {
 		defer resp.Body.Close()
 	}
