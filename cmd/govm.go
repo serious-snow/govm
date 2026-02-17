@@ -115,7 +115,8 @@ func upgradeGOVM(ctx context.Context) {
 	}
 	defer os.RemoveAll(tempDir)
 
-	tempFileName := filepath.Join(os.TempDir(), asset.GetName())
+	// 使用临时目录而不是全局/tmp目录，提高安全性
+	tempFileName := filepath.Join(tempDir, asset.GetName())
 
 	fd, fp := filepath.Split(tempFileName)
 
@@ -135,7 +136,8 @@ func upgradeGOVM(ctx context.Context) {
 		binFile += ".exe"
 	}
 
-	tempFile := os.Args[0] + ".new"
+	// 使用临时目录而不是os.Args[0] + ".new"，避免路径问题
+	tempFile := filepath.Join(tempDir, binFile+".new")
 	execFile := filepath.Join(tempDir, binFile)
 	err = os.Rename(execFile, tempFile)
 	if err != nil {
@@ -143,7 +145,10 @@ func upgradeGOVM(ctx context.Context) {
 		return
 	}
 
-	_ = os.Chmod(tempFile, os.ModePerm)
+	if err := os.Chmod(tempFile, os.ModePerm); err != nil {
+		Println("govm 设置权限失败：", err)
+		return
+	}
 	err = replaceExecutable(tempFile, getExecutable())
 	if err != nil {
 		Println("govm 升级失败：", err)

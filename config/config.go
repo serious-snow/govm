@@ -15,8 +15,14 @@ type Config struct {
 }
 
 func (c *Config) Sync() {
-	allBytes, _ := yaml.Marshal(c)
-	_ = os.WriteFile(c.path, allBytes, 0o644)
+	allBytes, err := yaml.Marshal(c)
+	if err != nil {
+		return
+	}
+	err = os.WriteFile(c.path, allBytes, 0o644)
+	if err != nil {
+		return
+	}
 }
 
 func InitConfig(processDir, configPath string) (conf Config, err error) {
@@ -27,7 +33,10 @@ func InitConfig(processDir, configPath string) (conf Config, err error) {
 			InstallPath: filepath.Join(processDir, ".install"),
 			path:        configPath,
 		}
-		allBytes, _ = yaml.Marshal(conf)
+		allBytes, err = yaml.Marshal(conf)
+		if err != nil {
+			return
+		}
 		err = os.WriteFile(configPath, allBytes, 0o644)
 		return
 	}

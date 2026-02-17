@@ -300,7 +300,10 @@ func readCurrentUseVersion() {
 	// Clean the path and extract version
 	versionStr := filepath.Base(relPath)
 	versionStr = strings.TrimPrefix(versionStr, "go")
-	currentUse = *version.New(versionStr)
+	v := version.New(versionStr)
+	if v != nil {
+		currentUse = *v
+	}
 }
 
 func trimVersion(version string) string {

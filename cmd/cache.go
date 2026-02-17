@@ -33,6 +33,7 @@ func cacheCommand() *cli.Command {
 					}
 					fileInfoList, err := os.ReadDir(conf.CachePath)
 					if err != nil {
+						printError("读取缓存目录失败：" + err.Error())
 						return nil
 					}
 					for _, info := range fileInfoList {
@@ -44,7 +45,9 @@ func cacheCommand() *cli.Command {
 						switch filepath.Ext(info.Name()) {
 						case ".json":
 						default:
-							_ = os.Remove(filepath.Join(conf.CachePath, info.Name()))
+							if err := os.Remove(filepath.Join(conf.CachePath, info.Name())); err != nil {
+								printError("删除缓存文件失败：" + err.Error())
+							}
 						}
 
 					}
@@ -64,6 +67,7 @@ func cacheCommand() *cli.Command {
 					}
 					fileInfoList, err := os.ReadDir(conf.CachePath)
 					if err != nil {
+						printError("读取缓存目录失败：" + err.Error())
 						return nil
 					}
 					for _, info := range fileInfoList {

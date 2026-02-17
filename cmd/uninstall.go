@@ -37,7 +37,9 @@ func uninstallVersion(version string) {
 		fileName := getDownloadFilename(version)
 
 		if path.FileIsExisted(fileName) {
-			_ = os.Remove(fileName)
+			if err := os.Remove(fileName); err != nil {
+				printError("删除缓存文件失败：" + err.Error())
+			}
 		}
 	}()
 	err := os.RemoveAll(filepath.Join(conf.InstallPath, version))

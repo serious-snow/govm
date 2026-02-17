@@ -44,7 +44,10 @@ func useVersion(version string) {
 		return
 	}
 
-	_ = os.Remove(linkPath)
+	if err := os.Remove(linkPath); err != nil && !os.IsNotExist(err) {
+		printError("删除旧软连接失败：" + err.Error())
+		return
+	}
 	err := Symlink(goRoot, linkPath)
 	if err != nil {
 		printError("创建软连接失败：" + err.Error())

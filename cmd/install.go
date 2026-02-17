@@ -92,10 +92,10 @@ func silentInstall(ver string, checkSha256 bool) error {
 
 	filename := versionInfo.Filename
 
-	oldSha := ""
+	oldSha := versionInfo.Sha256
 
 	if !checkSha256 {
-		oldSha = versionInfo.Sha256
+		oldSha = ""
 	}
 
 	newFileName := filepath.Join(conf.CachePath, filename)
@@ -104,7 +104,9 @@ func silentInstall(ver string, checkSha256 bool) error {
 		if oldSha == "" || utils.CheckSha256(newFileName, oldSha) {
 			download = false
 		} else {
-			_ = os.Remove(newFileName)
+			if err := os.Remove(newFileName); err != nil {
+				return fmt.Errorf("删除损坏的缓存文件失败: %w", err)
+			}
 		}
 	}
 	if download {

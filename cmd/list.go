@@ -104,11 +104,15 @@ func getAvailable() ([]*GoVersionInfo, error) {
 			}
 			seen[vv] = struct{}{}
 
+			v := version.New(vv)
+			if v == nil {
+				continue
+			}
 			list = append(list, &GoVersionInfo{
 				Filename: file.Filename,
 				Sha256:   file.Sha256,
 				Size:     file.Size,
-				Version:  *version.New(vv),
+				Version:  *v,
 			})
 		}
 	}

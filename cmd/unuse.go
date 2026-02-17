@@ -17,7 +17,10 @@ func unuseCommand() *cli.Command {
 				printError("当前没有激活的版本")
 				return nil
 			}
-			os.Remove(linkPath)
+			if err := os.Remove(linkPath); err != nil && !os.IsNotExist(err) {
+				printError("删除软连接失败：" + err.Error())
+				return nil
+			}
 			return nil
 		},
 	}

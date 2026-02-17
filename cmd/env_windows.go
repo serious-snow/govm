@@ -101,19 +101,34 @@ func elevate(cmd *exec.Cmd) error {
 	if err := ole.CoInitialize(0); err != nil {
 		return err
 	}
-	defer ole.CoUninitialize()
+	defer func() {
+		if err := ole.CoUninitialize(); err != nil {
+			// 记录错误但不阻止程序继续执行
+			fmt.Fprintf(os.Stderr, "警告: CoUninitialize 失败: %v\n", err)
+		}
+	}()
 
 	shell, err := oleutil.CreateObject("Shell.Application")
 	if err != nil {
 		return err
 	}
-	defer shell.Release()
+	defer func() {
+		if err := shell.Release(); err != nil {
+			// 记录错误但不阻止程序继续执行
+			fmt.Fprintf(os.Stderr, "警告: shell.Release 失败: %v\n", err)
+		}
+	}()
 
 	shellDispatch, err := shell.QueryInterface(ole.IID_IDispatch)
 	if err != nil {
 		return err
 	}
-	defer shellDispatch.Release()
+	defer func() {
+		if err := shellDispatch.Release(); err != nil {
+			// 记录错误但不阻止程序继续执行
+			fmt.Fprintf(os.Stderr, "警告: shellDispatch.Release 失败: %v\n", err)
+		}
+	}()
 
 	verb := "runas"
 	filePath, err := exec.LookPath(cmd.Path)
